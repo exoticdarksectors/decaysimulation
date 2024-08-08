@@ -95,15 +95,28 @@ int main(int argc, char* argv[]) {
     // Output: define the output tree mcp and its branches
     TFile *output = new TFile(argv[2], "RECREATE");
     TTree *tree = new TTree("mcp", "mcp");
-    double PX, PY, PZ, PP, M;
+    TTree *filteredTree = new TTree("mcp-filtered", "mcp-filtered");
+    double PX, PY, PZ, PP, M, PHI, THETA;
     tree->Branch("Px", &PX);
     tree->Branch("Py", &PY);
     tree->Branch("Pz", &PZ);
     tree->Branch("PP", &PP);
+    tree->Branch("Phi", &PHI);
+    tree->Branch("Theta", &THETA);
     tree->Branch("M", &M);
+
+    double fPX, fPY, fPZ, fPP, fM, fPHI, fTHETA;
+    filteredTree->Branch("Px", &fPX);
+    filteredTree->Branch("Py", &fPY);
+    filteredTree->Branch("Pz", &fPZ);
+    filteredTree->Branch("PP", &fPP);
+    filteredTree->Branch("Phi", &fPHI);
+    filteredTree->Branch("Theta", &fTHETA);
+    filteredTree->Branch("M", &fM);
     TRandom3 rand;
-
-
+    // detector parameters
+    double boxSize = 1.0; //meters
+    double distanceToBox = 40.0; //meters
     // Loop through tree data
     int totalSize = inputTree->GetEntries();
     cout << "Number of input tree entries: " << totalSize << endl;
@@ -172,29 +185,76 @@ int main(int argc, char* argv[]) {
         mcp1.momentum.Boost(momBx, momBy, momBz);
         mcp2.momentum.Boost(momBx, momBy, momBz);
 
+        // store momentum vector values to fill tree
         PX = mcp1.momentum.Px();
         PY = mcp1.momentum.Py();
         PZ = mcp1.momentum.Pz();
         PP = mcp1.momentum.P();
+        PHI = getPhi(PX,PY,PZ);
+        THETA = getTheta(PX, PY, PZ);
         M = mcp1.momentum.M();
+
+        // set minimum requried angles for interection with detector
+
+        double phiRequired = atan2(0.5*boxSize,distanceToBox);
+        double thetaRequired = phiRequired;
+        double phiFinal = getPhi(PX,PY,PZ);
+        double thetaFinal = getTheta(PX,PY,PZ);
+        // filter mcps intersecting detector: stored into an additional filtered tree
+        if (phiFinal<phiRequired && phiFinal>-phiRequired && thetaFinal<thetaRequired && thetaFinal>-thetaRequired) {
+            fPX = mcp1.momentum.Px();
+            fPY = mcp1.momentum.Py();
+            fPZ = mcp1.momentum.Pz();
+            fPP = mcp1.momentum.P();
+            fPHI = getPhi(fPX,fPY,fPZ);
+            fTHETA = getTheta(fPX, fPY, fPZ);
+            fM = mcp1.momentum.M();
+            filteredTree->Fill();
+        }
+
         tree->Fill();
 
+        // same process done for mcp2
         PX = mcp2.momentum.Px();
         PY = mcp2.momentum.Py();
         PZ = mcp2.momentum.Pz();
+        PHI = getPhi(PX,PY,PZ);
+        THETA = getTheta(PX, PY, PZ);
         PP = sqrt(pow(PX, 2) + pow(PY, 2) + pow(PZ, 2));
         M = mcp2.momentum.M();
+        phiFinal = getPhi(PX,PY,PZ);
+        thetaFinal = getTheta(PX,PY,PZ);
+        // building filtered tree from mcp2
+        if (phiFinal<phiRequired && phiFinal>-phiRequired && thetaFinal<thetaRequired && thetaFinal>-thetaRequired) {
+            fPX = mcp2.momentum.Px();
+            fPY = mcp2.momentum.Py();
+            fPZ = mcp2.momentum.Pz();
+            fPP = sqrt(pow(fPX, 2) + pow(fPY, 2) + pow(fPZ, 2));
+            fPHI = getPhi(fPX,fPY,fPZ);
+            fTHETA = getTheta(fPX, fPY, fPZ);
+            fM = mcp2.momentum.M();
+            filteredTree->Fill();
+        }
+
         tree->Fill();
     }
     // Move to the next line after completion
     cout << endl;
 
+    // calculate efficiency: (filtered entry size)/(original entry size)
+    int treeSize = tree->GetEntries();
+    int filteredTreeSize = filteredTree->GetEntries();
+    double efficiency = 100.0 * (double) filteredTreeSize/ (double) treeSize;
+    cout << "Efficiency: " << efficiency << " %"<< endl;
+
     // Close the ROOT file
     myFile->Close();
 
     // Write in output ROOT file
-    output->Write();
+    output->Write("", TObject::kOverwrite);
     output->Close();
+
+
 
     cout << "Completed Successfully!" << endl;
     cout << "Output stored in: " << argv[2] << endl;
