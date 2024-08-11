@@ -7,6 +7,8 @@
 
 #include "TRandom3.h"
 #include "TLorentzVector.h"
+#include <Math/Vector4D.h>
+#include <Math/GenVector/LorentzVector.h>
 #include "TVector3.h"
 
 #include "TFile.h"
@@ -28,6 +30,10 @@ double envelope = 150; // enveloping function of ddBrPi2gxx for rejection sampli
 const double epsilon = 1.0;
 const double mchi = 10.0; // MeV, mcp mass
 const double BrPi2gg = 1e9; // Br(pion -> gamam gamma)
+
+// detector parameters
+double boxSize = 1.0; //meters
+double distanceToBox = 40.0; //meters
 
 
 // store particle information
@@ -51,20 +57,6 @@ double ddBrPi2gxx(double s, double theta) {
            sqrt(1 - 4 * pow(mchi, 2) / s) * (2 - (1 - 4 * pow(mchi, 2) / s) * pow(sin(theta), 2)) * BrPi2gg;
 }
 
-// Computes the Phi angle in spherical coordinates from an input 3-d vector components
-double getPhi(double x, double y, double z) {
-    return atan2(y, x);
-}
-
-// Computes the Theta angle in spherical coordinates from an input 3-d vector components
-double getTheta(double x, double y, double z) {
-    return atan2(z, sqrt(x * x + y * y));
-}
-
-// Computes magnitude of an input 3-d vector
-double getMag(double x, double y, double z) {
-    return sqrt(x * x + y * y + z * z);
-}
 
 int main(int argc, char* argv[]) {
 
@@ -84,10 +76,11 @@ int main(int argc, char* argv[]) {
 
     // Define input tree and branches reader
     TTree *inputTree = (TTree *) myFile->Get("mesons");
-    double mypx, mypy, mypz;
+    double mypx, mypy, mypz, mye;
     inputTree->SetBranchAddress("px", &mypx);
     inputTree->SetBranchAddress("py", &mypy);
     inputTree->SetBranchAddress("pz", &mypz);
+    inputTree->SetBranchAddress("e", &mye);
 
     // Define variables to receive tree parsing
     double momP, momTheta, momPhi;
@@ -96,7 +89,7 @@ int main(int argc, char* argv[]) {
     TFile *output = new TFile(argv[2], "RECREATE");
     TTree *tree = new TTree("mcp", "mcp");
     TTree *filteredTree = new TTree("mcp-filtered", "mcp-filtered");
-    double PX, PY, PZ, PP, M, PHI, THETA;
+    double PX, PY, PZ, PP, M, PHI, THETA, E;
     tree->Branch("Px", &PX);
     tree->Branch("Py", &PY);
     tree->Branch("Pz", &PZ);
@@ -105,7 +98,7 @@ int main(int argc, char* argv[]) {
     tree->Branch("Theta", &THETA);
     tree->Branch("M", &M);
 
-    double fPX, fPY, fPZ, fPP, fM, fPHI, fTHETA;
+    double fPX, fPY, fPZ, fPP, fM, fPHI, fTHETA, fE;
     filteredTree->Branch("Px", &fPX);
     filteredTree->Branch("Py", &fPY);
     filteredTree->Branch("Pz", &fPZ);
@@ -113,10 +106,9 @@ int main(int argc, char* argv[]) {
     filteredTree->Branch("Phi", &fPHI);
     filteredTree->Branch("Theta", &fTHETA);
     filteredTree->Branch("M", &fM);
+
     TRandom3 rand;
-    // detector parameters
-    double boxSize = 1.0; //meters
-    double distanceToBox = 40.0; //meters
+
     // Loop through tree data
     int totalSize = inputTree->GetEntries();
     cout << "Number of input tree entries: " << totalSize << endl;
@@ -130,14 +122,18 @@ int main(int argc, char* argv[]) {
         // Get tree node entry
         inputTree->GetEntry(i);
 
-        // Compute the 2 angles: momTheta and momPhi from inputTree's moment vector
-        momTheta = getTheta(mypx, mypy, mypz);
-        momPhi = getPhi(mypx, mypy, mypz);
-        // Compute the magnitude momP from inputTree's moment vector
-        momP = getMag(mypx, mypy, mypz);
+        // Initialize Lorentz vector with vector components and particle energy
+        ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double>> lorentzVector(mypx, mypy, mypz, mye);
 
-        // sample s(=off-shell photon mass) and theta(angle between mcp momentum
-        // in the rest frame of off-shell photon and its z axis)
+        // Get the azimuthal angle (phi)
+        momPhi = lorentzVector.phi();
+
+        // Get the polar angle (theta)
+        momTheta = lorentzVector.theta();
+
+        // Get Magnitude
+        momP = lorentzVector.mag();
+
         double s, theta;
         while (true) {
             s = rand.Uniform(4.0 * pow(mchi, 2), pow(mpi, 2));
@@ -189,25 +185,35 @@ int main(int argc, char* argv[]) {
         PX = mcp1.momentum.Px();
         PY = mcp1.momentum.Py();
         PZ = mcp1.momentum.Pz();
+        E = mcp1.momentum.E();
         PP = mcp1.momentum.P();
-        PHI = getPhi(PX,PY,PZ);
-        THETA = getTheta(PX, PY, PZ);
         M = mcp1.momentum.M();
+
+        // MCP polar angles computed from lorentz vector
+        // ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double>> betalorentzVector(PX, PY, PZ, E);
+        // PHI = betalorentzVector.phi();
+        // THETA = betalorentzVector.theta();
+
+        PHI = mcp1.momentum.Phi();
+        THETA = mcp1.momentum.Theta();
+
 
         // set minimum requried angles for interection with detector
 
         double phiRequired = atan2(0.5*boxSize,distanceToBox);
         double thetaRequired = phiRequired;
-        double phiFinal = getPhi(PX,PY,PZ);
-        double thetaFinal = getTheta(PX,PY,PZ);
+        double phiFinal = PHI;
+        double thetaFinal = THETA;
         // filter mcps intersecting detector: stored into an additional filtered tree
         if (phiFinal<phiRequired && phiFinal>-phiRequired && thetaFinal<thetaRequired && thetaFinal>-thetaRequired) {
             fPX = mcp1.momentum.Px();
             fPY = mcp1.momentum.Py();
             fPZ = mcp1.momentum.Pz();
             fPP = mcp1.momentum.P();
-            fPHI = getPhi(fPX,fPY,fPZ);
-            fTHETA = getTheta(fPX, fPY, fPZ);
+            // fPHI = betalorentzVector.phi();
+            // fTHETA = betalorentzVector.theta();
+            PHI = mcp1.momentum.Phi();
+            THETA = mcp1.momentum.Theta();
             fM = mcp1.momentum.M();
             filteredTree->Fill();
         }
@@ -218,20 +224,29 @@ int main(int argc, char* argv[]) {
         PX = mcp2.momentum.Px();
         PY = mcp2.momentum.Py();
         PZ = mcp2.momentum.Pz();
-        PHI = getPhi(PX,PY,PZ);
-        THETA = getTheta(PX, PY, PZ);
-        PP = sqrt(pow(PX, 2) + pow(PY, 2) + pow(PZ, 2));
+        E = mcp2.momentum.E();
+        PP = mcp2.momentum.P();
         M = mcp2.momentum.M();
-        phiFinal = getPhi(PX,PY,PZ);
-        thetaFinal = getTheta(PX,PY,PZ);
+
+        // MCP polar angles computed from lorentz vector
+        // ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double>> alphalorentzVector(PX, PY, PZ, E);
+        PHI = mcp2.momentum.Phi();
+        THETA = mcp2.momentum.Theta();
+        // PHI = alphalorentzVector.phi();
+        // THETA = alphalorentzVector.theta();
+
+        phiFinal = PHI;
+        thetaFinal = THETA;
         // building filtered tree from mcp2
         if (phiFinal<phiRequired && phiFinal>-phiRequired && thetaFinal<thetaRequired && thetaFinal>-thetaRequired) {
             fPX = mcp2.momentum.Px();
             fPY = mcp2.momentum.Py();
             fPZ = mcp2.momentum.Pz();
-            fPP = sqrt(pow(fPX, 2) + pow(fPY, 2) + pow(fPZ, 2));
-            fPHI = getPhi(fPX,fPY,fPZ);
-            fTHETA = getTheta(fPX, fPY, fPZ);
+            fPP = mcp2.momentum.P();
+            // fPHI = alphalorentzVector.phi();
+            // fTHETA = alphalorentzVector.theta();
+            PHI = mcp2.momentum.Phi();
+            THETA = mcp2.momentum.Theta();
             fM = mcp2.momentum.M();
             filteredTree->Fill();
         }
