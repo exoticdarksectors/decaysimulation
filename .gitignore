@@ -33,7 +33,7 @@
 
 # Mac files
 *.DS_Store
-*.*/*.DS_Store
+*/.DS_Store
 
 # IDE files
 decay/.idea/
