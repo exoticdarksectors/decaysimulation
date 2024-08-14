@@ -18,7 +18,7 @@ using namespace std;
 using namespace ROOT::Math;
 
 // constants
-const double mpi = 134.9768; // MeV, charged pion mass
+const double mpi = 0.1349768; // GeV, charged pion mass
 const double mp = 938.272;
 const double alpha = 0.0072973526; // 1/137
 const double PI = 3.14159265358979;
@@ -28,13 +28,12 @@ double envelope = 150; // enveloping function of ddBrPi2gxx for rejection sampli
 
 // model parameter, like coupling constants
 const double epsilon = 1.0;
-const double mchi = 10.0; // MeV, mcp mass
+const double mchi = 0.0100; // GeV, mcp mass
 const double BrPi2gg = 1e9; // Br(pion -> gamam gamma)
 
 // detector parameters
-double boxSize = 1.0; //meters
+double detectorRadius = 2; //meters
 double distanceToBox = 40.0; //meters
-
 
 // store particle information
 struct Particle {
@@ -89,7 +88,7 @@ int main(int argc, char* argv[]) {
     TFile *output = new TFile(argv[2], "RECREATE");
     TTree *tree = new TTree("mcp", "mcp");
     TTree *filteredTree = new TTree("mcp-filtered", "mcp-filtered");
-    double PX, PY, PZ, PP, M, PHI, THETA, E;
+    double PX, PY, PZ, PP, M, PHI, THETA;
     tree->Branch("Px", &PX);
     tree->Branch("Py", &PY);
     tree->Branch("Pz", &PZ);
@@ -98,7 +97,7 @@ int main(int argc, char* argv[]) {
     tree->Branch("Theta", &THETA);
     tree->Branch("M", &M);
 
-    double fPX, fPY, fPZ, fPP, fM, fPHI, fTHETA, fE;
+    double fPX, fPY, fPZ, fPP, fM, fPHI, fTHETA;
     filteredTree->Branch("Px", &fPX);
     filteredTree->Branch("Py", &fPY);
     filteredTree->Branch("Pz", &fPZ);
@@ -124,13 +123,10 @@ int main(int argc, char* argv[]) {
 
         // Initialize Lorentz vector with vector components and particle energy
         ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double>> lorentzVector(mypx, mypy, mypz, mye);
-
         // Get the azimuthal angle (phi)
         momPhi = lorentzVector.phi();
-
         // Get the polar angle (theta)
         momTheta = lorentzVector.theta();
-
         // Get Magnitude
         momP = lorentzVector.mag();
 
@@ -185,74 +181,51 @@ int main(int argc, char* argv[]) {
         PX = mcp1.momentum.Px();
         PY = mcp1.momentum.Py();
         PZ = mcp1.momentum.Pz();
-        E = mcp1.momentum.E();
         PP = mcp1.momentum.P();
         M = mcp1.momentum.M();
-
-        // MCP polar angles computed from lorentz vector
-        // ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double>> betalorentzVector(PX, PY, PZ, E);
-        // PHI = betalorentzVector.phi();
-        // THETA = betalorentzVector.theta();
-
         PHI = mcp1.momentum.Phi();
         THETA = mcp1.momentum.Theta();
 
-
         // set minimum requried angles for interection with detector
-
-        double phiRequired = atan2(0.5*boxSize,distanceToBox);
-        double thetaRequired = phiRequired;
-        double phiFinal = PHI;
+        double thetaRequired = atan2(detectorRadius,distanceToBox);
         double thetaFinal = THETA;
         // filter mcps intersecting detector: stored into an additional filtered tree
-        if (phiFinal<phiRequired && phiFinal>-phiRequired && thetaFinal<thetaRequired && thetaFinal>-thetaRequired) {
+        if (thetaFinal <= thetaRequired) {
             fPX = mcp1.momentum.Px();
             fPY = mcp1.momentum.Py();
             fPZ = mcp1.momentum.Pz();
             fPP = mcp1.momentum.P();
-            // fPHI = betalorentzVector.phi();
-            // fTHETA = betalorentzVector.theta();
-            PHI = mcp1.momentum.Phi();
-            THETA = mcp1.momentum.Theta();
             fM = mcp1.momentum.M();
+            fPHI = mcp1.momentum.Phi();
+            fTHETA = mcp1.momentum.Theta();
             filteredTree->Fill();
         }
-
         tree->Fill();
 
         // same process done for mcp2
         PX = mcp2.momentum.Px();
         PY = mcp2.momentum.Py();
         PZ = mcp2.momentum.Pz();
-        E = mcp2.momentum.E();
         PP = mcp2.momentum.P();
         M = mcp2.momentum.M();
-
-        // MCP polar angles computed from lorentz vector
-        // ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double>> alphalorentzVector(PX, PY, PZ, E);
         PHI = mcp2.momentum.Phi();
         THETA = mcp2.momentum.Theta();
-        // PHI = alphalorentzVector.phi();
-        // THETA = alphalorentzVector.theta();
-
-        phiFinal = PHI;
         thetaFinal = THETA;
+
         // building filtered tree from mcp2
-        if (phiFinal<phiRequired && phiFinal>-phiRequired && thetaFinal<thetaRequired && thetaFinal>-thetaRequired) {
+        if (thetaFinal <= thetaRequired) {
             fPX = mcp2.momentum.Px();
             fPY = mcp2.momentum.Py();
             fPZ = mcp2.momentum.Pz();
             fPP = mcp2.momentum.P();
-            // fPHI = alphalorentzVector.phi();
-            // fTHETA = alphalorentzVector.theta();
-            PHI = mcp2.momentum.Phi();
-            THETA = mcp2.momentum.Theta();
             fM = mcp2.momentum.M();
+            fPHI = mcp2.momentum.Phi();
+            fTHETA = mcp2.momentum.Theta();
             filteredTree->Fill();
         }
-
         tree->Fill();
     }
+
     // Move to the next line after completion
     cout << endl;
 
@@ -268,8 +241,6 @@ int main(int argc, char* argv[]) {
     // Write in output ROOT file
     output->Write("", TObject::kOverwrite);
     output->Close();
-
-
 
     cout << "Completed Successfully!" << endl;
     cout << "Output stored in: " << argv[2] << endl;
