@@ -102,14 +102,14 @@ void* handler(void *t_argv)
 
     // pythia.particleData.list(31); // check if mcp is defined
 
-	int mesonID[4] = {111, 221, 443, 553};
+	int mesonID[1] = {111};// {111, 221, 443, 553};
 
     // event generation  
     for (int i = 0; i < nJobs; i ++) {
         if (!pythia.next()) continue; // skip when generation failed
         
 		for (int j = 0; j < pythia.event.size(); j++) {
-            for (int k = 0; k < 2; k++) {
+            for (int k = 0; k < 1; k++) {
 			    if ( abs(pythia.event.at(j).id()) == mesonID[k] ) {
 			    	id = pythia.event.at(j).id();
     		        px = pythia.event.at(j).px();
