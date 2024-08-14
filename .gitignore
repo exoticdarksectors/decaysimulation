@@ -42,3 +42,7 @@ mesongen/.idea
 # CMake build folders
 decay/cmake-build-debug
 mesongen/cmake-build-debug
+
+# Output data folders
+mesongen/output-data/
+decay/output-data/
