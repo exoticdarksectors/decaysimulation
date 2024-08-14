@@ -37,6 +37,7 @@ decay/.DS_Store
 
 # IDE files
 decay/.idea/
+mesongen/.idea
 
 # CMake build folders
 decay/cmake-build-debug
