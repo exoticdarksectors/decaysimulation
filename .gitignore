@@ -37,3 +37,7 @@
 
 # IDE files
 decay/*.idea
+
+# CMake build folders
+decay/cmake-build-debug
+mesongen/cmake-build-debug
