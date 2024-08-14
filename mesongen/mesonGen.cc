@@ -69,7 +69,7 @@ void* handler(void *t_argv)
     
     // define kinematic variables
     int id;
-    double px, py, pz, pt, p, m, e, mag;
+    double px, py, pz, pt, p, m, e, mag, phi, theta;
 	double x, y, z;
     
     // create branches
@@ -78,7 +78,11 @@ void* handler(void *t_argv)
     tree->Branch("px", &px);
     tree->Branch("py", &py);
     tree->Branch("pz", &pz);
-    tree->Branch("m",   &m);
+    tree->Branch("mass",   &m);
+	tree->Branch("phi", &phi);
+	tree->Branch("theta", &theta);
+	tree->Branch("mass",   &m);
+	tree->Branch("e",   &e);
 	tree->Branch("magnitude",   &mag);
 
 
@@ -91,28 +95,30 @@ void* handler(void *t_argv)
     
     // define random seed
     pythia.readString("Random:setSeed = on"); // use random seed 
-    pythia.readString(Form("Random:seed = %d", seed + ith)); // + ith to prevent redundant event generation 
+    pythia.readString(Form("Random:seed = %d", seed + ith)); // + ith to prevent redundant event generation
 
     pythia.init();
 
 
     // pythia.particleData.list(31); // check if mcp is defined
 
-    int mesonID[4] = {111, 221, 443, 553}; 
+	int mesonID[4] = {111, 221, 443, 553};
 
     // event generation  
     for (int i = 0; i < nJobs; i ++) {
-        if (!pythia.next()) continue; // skip when generation failed 
+        if (!pythia.next()) continue; // skip when generation failed
         
 		for (int j = 0; j < pythia.event.size(); j++) {
-            for (int k = 0; k < 4; k++) {
+            for (int k = 0; k < 2; k++) {
 			    if ( abs(pythia.event.at(j).id()) == mesonID[k] ) {
 			    	id = pythia.event.at(j).id();
     		        px = pythia.event.at(j).px();
     		        py = pythia.event.at(j).py();
     		        pz = pythia.event.at(j).pz();
+    		        phi = pythia.event.at(j).phi();
+			    	theta = pythia.event.at(j).theta();
+			    	e = pythia.event.at(j).e();
 			    	mag = sqrt(px*px + py*py + pz*pz);
-
     				tree->Fill();
     			}  
             }
