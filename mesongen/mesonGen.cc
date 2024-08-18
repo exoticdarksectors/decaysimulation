@@ -102,7 +102,7 @@ void* handler(void *t_argv)
 
     // pythia.particleData.list(31); // check if mcp is defined
 
-	int mesonID[1] = {111};// {111, 221, 443, 553};
+	int mesonID[1] = {443};// {111, 221, 443, 553};
 
     // event generation  
     for (int i = 0; i < nJobs; i ++) {
