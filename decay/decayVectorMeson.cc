@@ -14,7 +14,6 @@
 #include <TF1.h>
 #include <TRandom.h>
 #include <cmath>
-#include "decay.h"
 
 using namespace std;
 using namespace ROOT::Math;

@@ -24,6 +24,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
 # Create the main program using the library.
 add_executable(decayPion decayPion.cc)
 add_executable(decayVectorMeson decayVectorMeson.cc)
+add_executable(2BodyMomentum decayVectorMeson.cc)
 
 target_link_libraries(decayPion PUBLIC ROOT::Tree ROOT::Physics ROOT::TreePlayer)
 target_link_libraries(decayVectorMeson PUBLIC ROOT::Tree ROOT::Physics ROOT::TreePlayer)
