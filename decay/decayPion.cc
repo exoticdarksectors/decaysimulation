@@ -161,14 +161,6 @@ int main(int argc, char* argv[]) {
         // cout << "vBeta : " << vBeta << endl;
         mcp1.momentum.Boost(0, 0, vBeta);
         mcp2.momentum.Boost(0, 0, vBeta);
-        // pion -> V + gamma is an isotropic two-body decay processs
-        double vTheta = rand.Uniform(0.0, PI);
-        double vPhi = rand.Uniform(0.0, 2 * PI);
-        // rotate z axis of V back to pion rest frame
-        mcp1.momentum.RotateZ(vTheta);
-        mcp1.momentum.RotateY(vPhi);
-        mcp2.momentum.RotateZ(vTheta);
-        mcp2.momentum.RotateY(vPhi);
 
         // boost pion rest frame to lab frame
         double momE = sqrt(pow(momP, 2) + pow(mpi, 2));
