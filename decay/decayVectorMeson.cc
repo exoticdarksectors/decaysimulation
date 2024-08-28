@@ -14,6 +14,8 @@
 #include <TF1.h>
 #include <TRandom.h>
 #include <cmath>
+#include <fstream>
+#include <string>
 
 using namespace std;
 using namespace ROOT::Math;
@@ -23,7 +25,7 @@ const double mJsi = 3.096916; // GeV/c^2, J/psi meson mass
 const double PI = 3.14159265358979;
 const double conv2rad = PI / 180.0;
 // model parameter, like coupling constants
-const double mchi = 0.0100; // GeV, mcp mass
+// const double mchi = 0.0450;
 // detector parameters
 double detectorRadius = 2; //meters
 double distanceToBox = 40.0; //meters
@@ -97,7 +99,7 @@ std::pair<TLorentzVector,TLorentzVector> Do2BodyDecay(TLorentzVector p4_mother, 
 int main(int argc, char* argv[]) {
 
     // Check if the correct number of arguments are provided
-    if (argc != 3) {
+    if (argc != 4) {
         cerr << "Usage: " << argv[0] << " <file1>" << endl;
         return 1;
     }
@@ -108,6 +110,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error opening file" << std::endl;
         return -1;
     }
+    double mchi = atof(argv[3]);
 
     // Define input tree and branches reader
     TTree *inputTree = (TTree *) myFile->Get("mesons");
@@ -235,6 +238,24 @@ int main(int argc, char* argv[]) {
 
     cout << "Completed Successfully!" << endl;
     cout << "Output stored in: " << argv[2] << endl;
+
+    std::string output_filename = "../sensitivity-plot/efficiency_output.txt";
+
+    // Create an ofstream object to write to the file
+    std::ofstream output_file(output_filename);
+
+    // Check if the file is open
+    if (output_file.is_open()) {
+        // Write the efficiency value to the file
+        output_file << argv[3] << " " << std::to_string((efficiency/100.0)) << std::endl;
+
+        // Close the file
+        output_file.close();
+        std::cout << "Efficiency written to " << output_filename << std::endl;
+    } else {
+        std::cerr << "Error: Unable to open file " << output_filename << std::endl;
+        return 1;
+    }
 
     return 0;
 }
