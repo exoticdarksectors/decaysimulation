@@ -13,7 +13,6 @@
 
 using namespace std;
 
-
 // multi-threading callback function
 void* handler(void *t_argv);
 
@@ -30,8 +29,7 @@ int main(int argc, char *argv[])
     int nCores = strtol(argv[2], NULL, 10);
     int nEvents = strtol(argv[3], NULL, 10);
     int nJobs = nEvents / nCores;
-    cout << "seed : " << seed << "    nCores : " << nCores << "    nJobs : " << nJobs << endl; 
-
+    cout << "seed : " << seed << "    nCores : " << nCores << "    nJobs : " << nJobs << endl;
     
     // define threads for multi-threading 
     TThread* th[nCores];
@@ -53,8 +51,6 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-
 
 void* handler(void *t_argv)
 {
@@ -102,7 +98,7 @@ void* handler(void *t_argv)
 
     // pythia.particleData.list(31); // check if mcp is defined
 
-	int mesonID[1] = {443};// {111, 221, 443, 553};
+	int mesonID[1] = {221};// {pi0:111, eta:221, J/psi:443, upsilon:553, rho:113, omega:223, phi:333};
 
     // event generation  
     for (int i = 0; i < nJobs; i ++) {
@@ -128,4 +124,3 @@ void* handler(void *t_argv)
     output->Write();
     output->Close();
 }
-
