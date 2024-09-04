@@ -10,6 +10,8 @@
 #include <Math/Vector4D.h>
 #include <Math/GenVector/LorentzVector.h>
 #include "TVector3.h"
+#include <fstream>
+#include <string>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -18,7 +20,7 @@ using namespace std;
 using namespace ROOT::Math;
 
 // constants
-const double mpi = 0.1349768; // GeV, charged pion mass
+// const double mpi = 0.1349768; // GeV, charged pion mass
 const double mp = 0.938272;
 const double alpha = 0.0072973526; // 1/137
 const double PI = 3.14159265358979;
@@ -28,7 +30,7 @@ double envelope = 150; // enveloping function of ddBrPi2gxx for rejection sampli
 
 // model parameter, like coupling constants
 const double epsilon = 1.0;
-const double mchi = 0.0100; // GeV, mcp mass
+//double mchi = 0.01; // GeV, mcp mass
 const double BrPi2gg = 1e9; // Br(pion -> gamam gamma)
 
 // detector parameters
@@ -51,8 +53,8 @@ double lambda(double x, double y, double z) {
 }
 
 // consider only massless dark vector mediator, so no on-shell contribution
-double ddBrPi2gxx(double s, double theta) {
-    return sin(theta) * pow(epsilon, 2) * alpha / (4 * PI * s) * pow(1 - s / pow(mpi, 2), 3) *
+double ddBrPi2gxx(double s, double theta, double mchi, double mMother) {
+    return sin(theta) * pow(epsilon, 2) * alpha / (4 * PI * s) * pow(1 - s / pow(mMother, 2), 3) *
            sqrt(1 - 4 * pow(mchi, 2) / s) * (2 - (1 - 4 * pow(mchi, 2) / s) * pow(sin(theta), 2)) * BrPi2gg;
 }
 
@@ -60,7 +62,7 @@ double ddBrPi2gxx(double s, double theta) {
 int main(int argc, char* argv[]) {
 
     // Check if the correct number of arguments are provided
-    if (argc != 3) {
+    if (argc != 6) {
         cerr << "Usage: " << argv[0] << " <file1>" << endl;
         return 1;
     }
@@ -70,6 +72,13 @@ int main(int argc, char* argv[]) {
     if (!myFile || myFile->IsZombie()) {
         std::cerr << "Error opening file" << std::endl;
         return -1;
+    }
+    double mchi = atof(argv[3]);
+    double mMother = atof(argv[4]);
+
+    if(2*mchi > mMother){
+        std::cout << "ERROR: illegal 3-body decay! m1 + m2 > M (" << mchi << ", " << mchi << ", " << mMother << ")\n";
+        throw std::exception();
     }
 
     // Define input tree and branches reader
@@ -116,7 +125,6 @@ int main(int argc, char* argv[]) {
             cout << "\rCompletion Percentage: " << fixed << setprecision(2) << 100.0 * (double) i / (double) totalSize
                     << "%" << flush;
         }
-
         // Get tree node entry
         inputTree->GetEntry(i);
 
@@ -131,9 +139,9 @@ int main(int argc, char* argv[]) {
 
         double s, theta;
         while (true) {
-            s = rand.Uniform(4.0 * pow(mchi, 2), pow(mpi, 2));
+            s = rand.Uniform(4.0 * pow(mchi, 2), pow(mMother, 2));
             theta = rand.Uniform(0.0, PI);
-            double y = ddBrPi2gxx(s, theta);
+            double y = ddBrPi2gxx(s, theta, mchi, mMother);
             // cout << y << endl;
             if (y >= rand.Uniform(0, 1) * envelope) {
                 // renew envelope when y > envelope
@@ -156,14 +164,25 @@ int main(int argc, char* argv[]) {
                                  sqrt(P * P + mchi * mchi));
 
         // boost V from its rest frame along z direction
-        double vP = lambda(mpi, sqrt(s), 0); // pion -> V + gamma, mass of gamma = 0
+        double vP = lambda(mMother, sqrt(s), 0); // pion -> V + gamma, mass of gamma = 0
         double vBeta = vP / sqrt(vP * vP + s);
-        // cout << "vBeta : " << vBeta << endl;
-        mcp1.momentum.Boost(0, 0, vBeta);
-        mcp2.momentum.Boost(0, 0, vBeta);
+        // // cout << "vBeta : " << vBeta << endl;
+        // mcp1.momentum.Boost(0, 0, vBeta);
+        // mcp2.momentum.Boost(0, 0, vBeta);
+
+        double vTheta = rand.Uniform(0.0, PI);
+        double vPhi = rand.Uniform(-PI, PI);
+
+        // rotate z axis of V back to pion rest frame
+        // mcp1.momentum.RotateZ(vTheta);
+        // mcp1.momentum.RotateY(vPHI);
+        // mcp2.momentum.RotateY(vPHI);
+        // mcp2.momentum.RotateZ(vTheta);
+        mcp1.momentum.Boost(vBeta * sin(vTheta) * cos(vPhi), vBeta * sin(vTheta) * sin(vPhi), vBeta * cos(vTheta));
+        mcp2.momentum.Boost(vBeta * sin(vTheta) * cos(vPhi), vBeta * sin(vTheta) * sin(vPhi), vBeta * cos(vTheta));
 
         // boost pion rest frame to lab frame
-        double momE = sqrt(pow(momP, 2) + pow(mpi, 2));
+        double momE = sqrt(pow(momP, 2) + pow(mMother, 2));
         double momBx = momP * sin(momTheta) * cos(momPhi) / momE;
         double momBy = momP * sin(momTheta) * sin(momPhi) / momE;
         double momBz = momP * cos(momTheta) / momE;
@@ -237,6 +256,24 @@ int main(int argc, char* argv[]) {
 
     cout << "Completed Successfully!" << endl;
     cout << "Output stored in: " << argv[2] << endl;
+
+    std::string output_filename = "../sensitivity-plot/" + std::string(argv[5]);
+
+    // Create an ofstream object to write to the file
+    std::ofstream output_file(output_filename);
+
+    // Check if the file is open
+    if (output_file.is_open()) {
+        // Write the efficiency value to the file
+        output_file << argv[3] << " " << std::to_string((efficiency/100.0)) << std::endl;
+
+        // Close the file
+        output_file.close();
+        std::cout << "Efficiency written to " << output_filename << std::endl;
+    } else {
+        std::cerr << "Error: Unable to open file " << output_filename << std::endl;
+        return 1;
+    }
 
     return 0;
 }
