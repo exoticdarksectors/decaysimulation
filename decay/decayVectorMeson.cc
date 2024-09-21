@@ -26,7 +26,7 @@ const double conv2rad = PI / 180.0;
 // model parameter, like coupling constants
 // const double mchi = 0.0450;
 // detector parameters
-double detectorRadius = 2; //meters
+double detectorRadius = 0.5; //meters
 double distanceToBox = 40.0; //meters
 
 // use global TF1s. Otherwise, the overhead of re-computing integrals every time is verrrry slow

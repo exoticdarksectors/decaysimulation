@@ -34,7 +34,7 @@ const double epsilon = 1.0;
 const double BrPi2gg = 1e9; // Br(pion -> gamam gamma)
 
 // detector parameters
-double detectorRadius = 2.0; //meters
+double detectorRadius = 0.5; //meters
 double distanceToBox = 40.0; //meters
 
 // store particle information
