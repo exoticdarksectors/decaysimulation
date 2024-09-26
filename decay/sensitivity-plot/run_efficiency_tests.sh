@@ -42,10 +42,10 @@ efficiency_output_2bodydecay=(
 )
 
 total_efficiency_output_2bodydecay=(
-    "${base_directory}/decay/sensitivity-plot/total_efficiency_output2bodydecay-jsi.txt"
-    "${base_directory}/decay/sensitivity-plot/total_efficiency_output2bodydecay-rho.txt"
-    "${base_directory}/decay/sensitivity-plot/total_efficiency_output2bodydecay-omega.txt"
-    "${base_directory}/decay/sensitivity-plot/total_efficiency_output2bodydecay-phi.txt"
+    "${base_directory}/decay/sensitivity-plot/total_efficiency_output2bodydecay-jsi1m.txt"
+    "${base_directory}/decay/sensitivity-plot/total_efficiency_output2bodydecay-rho1m.txt"
+    "${base_directory}/decay/sensitivity-plot/total_efficiency_output2bodydecay-omega1m.txt"
+    "${base_directory}/decay/sensitivity-plot/total_efficiency_output2bodydecay-phi1m.txt"
 )
 
 declare -a efficiency_output_three_body
@@ -57,8 +57,8 @@ efficiency_output_three_body=(
 )
 
 total_efficiency_output_three_body=(
-  "${base_directory}/decay/sensitivity-plot/total_efficiency_outputdecayPion.txt"
-  "${base_directory}/decay/sensitivity-plot/total_efficiency_outputdecayEta.txt"
+  "${base_directory}/decay/sensitivity-plot/total_efficiency_outputdecayPion1m.txt"
+  "${base_directory}/decay/sensitivity-plot/total_efficiency_outputdecayEta1m.txt"
 )
 declare -a three-body-masses
 three_body_masses=(

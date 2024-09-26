@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
     mg->Draw("AL");
 
     // Set graph styles
-    graph1->SetTitle("Efficiency vs Mass;Mass (GeV/c^2);Efficiency");
+    mg->SetTitle("Efficiency vs Mass;Mass (GeV/c^2);Efficiency");
     graph1->SetLineColor(kBlue);
     graph1->SetLineWidth(2);
 
@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
     // Set the x-axis and y-axis range for the multigraph
     double xMin = 1e-2;
     double xMax = 1e1;
-    double yMin = 0.005;
+    double yMin = 0.0003;
     double yMax = 1;
 
     mg->GetXaxis()->SetRangeUser(xMin, xMax);  // Set x-axis range for the multigraph

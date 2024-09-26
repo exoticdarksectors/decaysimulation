@@ -26,7 +26,7 @@ const double conv2rad = PI / 180.0;
 // model parameter, like coupling constants
 // const double mchi = 0.0450;
 // detector parameters
-double detectorRadius = 0.5; //meters
+double detectorRadius = 1.0; //meters
 double distanceToBox = 40.0; //meters
 
 // use global TF1s. Otherwise, the overhead of re-computing integrals every time is verrrry slow
@@ -99,6 +99,7 @@ std::pair<TLorentzVector,TLorentzVector> Do2BodyDecay(TLorentzVector p4_mother, 
 int main(int argc, char* argv[]) {
 
     // Check if the correct number of arguments are provided
+    // input arguments for this scripts: ./decayVectorMeson.cc Meson_inputRootfile MCP_outputRootfile MCP_mass single_efficiency_value_outputfile
     if (argc != 5) {
         cerr << "Usage: " << argv[0] << " <file1>" << endl;
         return 1;
@@ -174,7 +175,6 @@ int main(int argc, char* argv[]) {
         PX = mcp1.Px();
         PY = mcp1.Py();
         PZ = mcp1.Pz();
-        E = mcp1.E();
         PP = mcp1.P();
         M = mcp1.M();
         PHI = mcp1.Phi();
