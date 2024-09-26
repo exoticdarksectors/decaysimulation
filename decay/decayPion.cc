@@ -34,7 +34,7 @@ const double epsilon = 1.0;
 const double BrPi2gg = 1e9; // Br(pion -> gamam gamma)
 
 // detector parameters
-double detectorRadius = 0.5; //meters
+double detectorRadius = 1.0; //meters
 double distanceToBox = 40.0; //meters
 
 // store particle information
@@ -62,6 +62,7 @@ double ddBrPi2gxx(double s, double theta, double mchi, double mMother) {
 int main(int argc, char* argv[]) {
 
     // Check if the correct number of arguments are provided
+    // input arguments for this scripts: ./decayPion.cc Meson_inputRootfile MCP_outputRootfile MCP_mass Mother_particle_mass single_efficiency_value_outputfile
     if (argc != 6) {
         cerr << "Usage: " << argv[0] << " <file1>" << endl;
         return 1;
