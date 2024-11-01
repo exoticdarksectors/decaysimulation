@@ -80,16 +80,19 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
     ageo_omega = ageo_dataomega[:,1]
     ageo_phi = ageo_dataphi[:,1]
     ageo_pi = ageo_datapi[:,1]
-    ageo_eta = ageo_dataeta[:,2]
+    if fileNameEta == '/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/ageo_darkquest_0.5m.txt':
+        ageo_eta = ageo_dataeta[:,2]
+    else:
+        ageo_eta = ageo_dataeta[:,1]
     ageo_jpsi = ageo_datajpsi[:,1]
-    ageo_upsilon = np.full(200, 0.011462)
+    ageo_upsilon = np.full(mass_upsilon.size, 0.010127)
 
     # define phase space integrals
     def I2(x, y):
         return ((1 + 2 * x) * np.sqrt(1 - 4 * x)) / ((1 + 2 * y) * np.sqrt(1 - 4 * y))
 
     def I3_integrand(z, x):
-        return 2 / (3 * 3.14) * np.sqrt(1 - 4 * x / z)  * ((1 - z) ** 3) * (2 * x + z) / (z ** 2)
+        return 2 / (3 * 3.14) * np.sqrt(1 - 4 * x / z) * ((1 - z) ** 3) * (2 * x + z) / (z ** 2)
 
     def I3(x):
         return quad(I3_integrand, 4 * x, 1, args=(x))[0]  # integrate
@@ -97,13 +100,13 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
     v_I3 = np.vectorize(I3) # vectorize
 
     # define productions
-    pi      = np.zeros(np.shape(mass_pi))
-    eta     = np.zeros(np.shape(mass_eta))
+    pi = np.zeros(np.shape(mass_pi))
+    eta = np.zeros(np.shape(mass_eta))
     phi = np.zeros(np.shape(mass_phi))
     omega = np.zeros(np.shape(mass_omega))
-    jpsi    = np.zeros(np.shape(mass_jpsi))
+    jpsi = np.zeros(np.shape(mass_jpsi))
     rho = np.zeros(np.shape(mass_rho))
-    upsilon = np.zeros(np.shape(mass))
+    upsilon = np.zeros(np.shape(mass_upsilon))
 
     # masking to achieve kinematical validity
     # Dalitz decay
@@ -115,7 +118,7 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
 
     # Dalitz decay
     pi[mass_pi < m_pi/2] = NPOT * ageo_pi[mass_pi < m_pi/2] * 2 * c_pi * branch_pi * alpha * v_I3( mass_pi[mass_pi < m_pi/2] ** 2 / m_pi ** 2)
-    eta[mass_eta < m_eta/2] = NPOT * ageo_eta[mass_eta < m_eta/2] * 2 * c_eta * branch_eta * alpha * v_I3( mass_eta[mass_eta < m_eta/2] ** 2 /  m_eta/2 ** 2)
+    eta[mass_eta < m_eta/2] = NPOT * ageo_eta[mass_eta < m_eta/2] * 2 * c_eta * branch_eta * alpha * v_I3( mass_eta[mass_eta < m_eta/2] ** 2 / m_eta ** 2)
 
     # Direct decay
     jpsi[mass_jpsi < m_jpsi/2] = NPOT * ageo_jpsi[mass_jpsi < m_jpsi/2] * 2  * c_jpsi * branch_jpsi * I2( mass_jpsi[mass_jpsi < m_jpsi/2] ** 2 / m_jpsi ** 2, m_e ** 2 / m_jpsi ** 2  )
@@ -126,20 +129,9 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
 
     return pi, eta, jpsi, rho, omega, phi, upsilon
 
-def dyProduction(fileNamecross, filenamedy, NPOT):
+def dyProduction(fileNamecross, filenamedy, NPOT, totalCrossSection):
 
-    totalCrossSection = 300e-3
-
-    #     mass = np.array([])
-    #     cross_dy = np.array([])
-    #     ageo_dy = np.array([])
-    #
-    #     with open(fileName, 'r') as f:
-    #         data = f.readlines()
-    #         for line in data:
-    #             values = line.strip().split()
-    #             np.append(cross_dy, float(values[1]) * 1e-12) # convert to pico-barn
-    #             np.append(ageo_dy,  float(values[2]))
+    # totalCrossSection = 300e-3
 
     # Import Data from efficiency files
     ageo_datacross = np.loadtxt(fileNamecross)
@@ -159,53 +151,56 @@ if __name__ == '__main__':
     # values = line.strip().split()
     #            print(line)
     #            np.append(mass, float(line) )
-    mass = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/mchi_values.txt')
-
+    mass_dark = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/mchi_values.txt')
+    mass_ship = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/mass_ship.txt')
     # get decay production
-    NPOT = 1e18
+    NPOT_dark = 1e18
+    NPOT_ship = 4*1e19
     #   pi_numi, eta_numi, jpsi_numi, upsilon_numi = mesonDecayProduction(numi)
     #   pi_dune, eta_dune, jpsi_dune, upsilon_dune = mesonDecayProduction(dune)
     base = '/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/'
-    mesonDecay_dune = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion.txt',
-                                                base + 'ageo_darkquest_0.5m.txt',
+    mesonDecay_dark = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion.txt',
+                                                base + 'total_efficiency_outputdecayEta.txt',
                                                 base + 'total_efficiency_output2bodydecay-rho.txt',
                                                 base + 'total_efficiency_output2bodydecay-phi.txt',
                                                 base + 'total_efficiency_output2bodydecay-omega.txt',
                                                 base + 'total_efficiency_output2bodydecay-jsi.txt',
-                                                NPOT,mass))
+                                                NPOT_dark, mass_dark))
 
-    mesonDecay_numi = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion1m.txt',
-                                                base + 'ageo_darkquest.txt',
-                                                base + 'total_efficiency_output2bodydecay-rho1m.txt',
-                                                base + 'total_efficiency_output2bodydecay-phi1m.txt',
-                                                base + 'total_efficiency_output2bodydecay-omega1m.txt',
-                                                base + 'total_efficiency_output2bodydecay-jsi1m.txt',
-                                                NPOT,mass))
+    mesonDecay_ship = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion1mSpin.txt',
+                                                base + 'total_efficiency_outputdecayEta1mSpin.txt',
+                                                base + 'total_efficiency_output2bodydecay-rho1mSpin.txt',
+                                                base + 'total_efficiency_output2bodydecay-phi1mSpin.txt',
+                                                base + 'total_efficiency_output2bodydecay-omega1mSpin.txt',
+                                                base + 'total_efficiency_output2bodydecay-jsi1mSpin.txt',
+                                                NPOT_ship, mass_ship))
 
-    print(mesonDecay_numi[6])
+    # print(mesonDecay_numi[6])
+
     # get DY production
-    dy_dune = dyProduction(base+'efficiency_dy_dark_0.5m.txt', base+'dy_cross_dark.txt', NPOT)
-    dy_numi = dyProduction(base+'efficiency_dy_dark.txt', base+'dy_cross_dark.txt', NPOT)
+    dy_dark = dyProduction(base+'efficiency_dy_dark_0.5m.txt', base+'dy_cross_dark.txt', NPOT_dark, 300e-3)
+    # dy_numi = dyProduction(base+'efficiency_dy_dark.txt', base+'dy_cross_dark.txt', NPOT)
+    dy_ship = dyProduction(base+'efficiency_dy_ship_1m.txt', base+'dy_cross_ship.txt', NPOT_ship, 260e-3)
 
     # add padings
-    for i in range(len(mesonDecay_numi)):
-        difference = mass.size - mesonDecay_numi[i].size
-        mesonDecay_numi[i] = np.pad(mesonDecay_numi[i], (0, difference), 'constant',  constant_values=0)
-        difference = mass.size - mesonDecay_dune[i].size
-        mesonDecay_dune[i] = np.pad(mesonDecay_dune[i], (0, difference), 'constant',  constant_values=0)
+    for i in range(len(mesonDecay_ship)):
+        difference = mass_ship.size - mesonDecay_ship[i].size
+        mesonDecay_ship[i] = np.pad(mesonDecay_ship[i], (0, difference), 'constant',  constant_values=0)
+        difference = mass_dark.size - mesonDecay_dark[i].size
+        mesonDecay_dark[i] = np.pad(mesonDecay_dark[i], (0, difference), 'constant',  constant_values=0)
 
-    difference1 = mass.size - dy_numi.size
-    difference2 = mass.size - dy_dune.size
+    difference1 = mass_ship.size - dy_ship.size
+    difference2 = mass_dark.size - dy_dark.size
 
-    dy_numi = np.pad(dy_numi, (0, difference1), 'constant', constant_values=0)
-    dy_dune = np.pad(dy_dune, (0, difference2), 'constant', constant_values=0)
+    dy_ship = np.pad(dy_ship, (0, difference1), 'constant', constant_values=0)
+    dy_dark = np.pad(dy_dark, (0, difference2), 'constant', constant_values=0)
 
-    total_numi = dy_numi
-    total_dune = dy_dune
+    total_ship = dy_ship
+    total_dark = dy_dark
 
-    for i in range(len(mesonDecay_numi)):
-        total_numi = total_numi + mesonDecay_numi[i]
-        total_dune = total_dune + mesonDecay_dune[i]
+    for i in range(len(mesonDecay_ship)):
+        total_ship = total_ship + mesonDecay_ship[i]
+        total_dark = total_dark + mesonDecay_dark[i]
 
     # print(mass.size)
     # print(dy_numi.size)
@@ -232,17 +227,17 @@ if __name__ == '__main__':
     ax1.set_ylim(1, 1e18)
     ax1.set_yticks(y_ticks)
     ax1.set_yticklabels(y_tick_labels)
-    ax1.plot(mass, mesonDecay_numi[0], label = r'$\pi^{0}\to\gamma\chi\overline{\chi}$')
-    ax1.plot(mass, mesonDecay_numi[1], label = r'$\eta\to\gamma\chi\overline{\chi}$')
-    ax1.plot(mass, mesonDecay_numi[2], label = r'$\rho\to\chi\overline{\chi}$')
-    ax1.plot(mass, mesonDecay_numi[3], label = r'$\Phi\to\chi\overline{\chi}$')
-    ax1.plot(mass, mesonDecay_numi[4], label = r'$\Omega\to\chi\overline{\chi}$')
-    ax1.plot(mass, mesonDecay_numi[5], label = r'$J/\psi\to\chi\overline{\chi}$')
-    ax1.plot(mass, mesonDecay_numi[6], label = r'$\Upsilon\to\chi\overline{\chi}$')
-    ax1.plot(mass, dy_numi,            label =  r'$q\overline{q}\to\gamma^{*}\to\chi\overline{\chi}$')
-    ax1.plot(mass, total_numi, color='black', linestyle='solid', linewidth=2, label='Total')
+    ax1.plot(mass_ship, mesonDecay_ship[0], label = r'$\pi^{0}\to\gamma\chi\overline{\chi}$')
+    ax1.plot(mass_ship, mesonDecay_ship[1], label = r'$\eta\to\gamma\chi\overline{\chi}$')
+    ax1.plot(mass_ship, mesonDecay_ship[2], label = r'$\rho\to\chi\overline{\chi}$')
+    ax1.plot(mass_ship, mesonDecay_ship[3], label = r'$\Phi\to\chi\overline{\chi}$')
+    ax1.plot(mass_ship, mesonDecay_ship[4], label = r'$\Omega\to\chi\overline{\chi}$')
+    ax1.plot(mass_ship, mesonDecay_ship[5], label = r'$J/\psi\to\chi\overline{\chi}$')
+    ax1.plot(mass_ship, mesonDecay_ship[6], label = r'$\Upsilon\to\chi\overline{\chi}$')
+    ax1.plot(mass_ship, dy_ship,            label = r'$q\overline{q}\to\gamma^{*}\to\chi\overline{\chi}$')
+    ax1.plot(mass_ship, total_ship, color='black', linestyle='solid', linewidth=2, label='Total')
     ax1.legend(loc = 'lower left', ncol = 2)
-    ax1.text(0.55, 0.93, '$1$ Year at LongQuest ($10^{18}$ POT) \n $40$ m, $1$ m radius cylindrical detector', transform=ax1.transAxes, fontsize=10, verticalalignment='center', multialignment = 'left',  bbox=textbox_props)
+    ax1.text(0.55, 0.93, '$1$ Year at SHIP ($4 x 10^{19}$ POT) \n $100$ m, $1$ m radius cylindrical detector', transform=ax1.transAxes, fontsize=10, verticalalignment='center', multialignment = 'left',  bbox=textbox_props)
 
     ax2.margins(x=0, y=0)
     ax2.set_xscale('log')
@@ -254,23 +249,20 @@ if __name__ == '__main__':
     ax2.set_ylim(1, 1e18)
     ax2.set_yticks(y_ticks)
     ax2.set_yticklabels(y_tick_labels)
-    ax2.plot(mass, mesonDecay_dune[0], label = r'$\pi^{0}\to\gamma\chi\overline{\chi}$')
-    ax2.plot(mass, mesonDecay_dune[1], label = r'$\eta\to\gamma\chi\overline{\chi}$')
-    ax2.plot(mass, mesonDecay_dune[2], label = r'$J/\psi\to\chi\overline{\chi}$')
-    ax2.plot(mass, mesonDecay_dune[3], label = r'$\Upsilon\to\chi\overline{\chi}$')
-    ax2.plot(mass, mesonDecay_dune[4], label = r'$\Omega\to\chi\overline{\chi}$')
-    ax2.plot(mass, mesonDecay_dune[5], label = r'$J/\psi\to\chi\overline{\chi}$')
-    ax2.plot(mass, mesonDecay_dune[6], label = r'$\Upsilon\to\chi\overline{\chi}$')
-    ax2.plot(mass, dy_dune,            label = r'$q\overline{q}\to\gamma^{*}\to\chi\overline{\chi}$')
-    ax2.plot(mass, total_dune, color='black', linestyle='solid', linewidth=2, label='Total')
+    ax2.plot(mass_dark, mesonDecay_dark[0], label = r'$\pi^{0}\to\gamma\chi\overline{\chi}$')
+    ax2.plot(mass_dark, mesonDecay_dark[1], label = r'$\eta\to\gamma\chi\overline{\chi}$')
+    ax2.plot(mass_dark, mesonDecay_dark[2], label = r'$J/\psi\to\chi\overline{\chi}$')
+    ax2.plot(mass_dark, mesonDecay_dark[3], label = r'$\Upsilon\to\chi\overline{\chi}$')
+    ax2.plot(mass_dark, mesonDecay_dark[4], label = r'$\Omega\to\chi\overline{\chi}$')
+    ax2.plot(mass_dark, mesonDecay_dark[5], label = r'$J/\psi\to\chi\overline{\chi}$')
+    ax2.plot(mass_dark, mesonDecay_dark[6], label = r'$\Upsilon\to\chi\overline{\chi}$')
+    ax2.plot(mass_dark, dy_dark,            label = r'$q\overline{q}\to\gamma^{*}\to\chi\overline{\chi}$')
+    ax2.plot(mass_dark, total_dark, color='black', linestyle='solid', linewidth=2, label='Total')
     ax2.legend(loc = 'lower left', ncol = 2)
     ax2.text(0.55, 0.93, '$1$ Year at LongQuest ($10^{18}$ POT) \n $40$ m, $0.5$ m radius cylindrical detector', transform=ax2.transAxes, fontsize=10, verticalalignment='center', multialignment = 'left', bbox=textbox_props)
 
+
+
     plt.show()
-    print(total_numi)
-    print(total_dune)
-
-
     # save plot as pgf format
     # fig.savefig('MCP-production.pgf')
-
