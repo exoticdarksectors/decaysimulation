@@ -27,7 +27,7 @@ const double conv2rad = PI / 180.0;
 // const double mchi = 0.0450;
 // detector parameters
 double detectorRadius = 1.0; //meters
-double distanceToBox = 40.0; //meters
+double distanceToBox = 100.0; //meters
 
 // use global TF1s. Otherwise, the overhead of re-computing integrals every time is verrrry slow
 TF1 *PDF_LOGQ2_VDM = 0;

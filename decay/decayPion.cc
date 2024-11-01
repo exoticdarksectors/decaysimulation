@@ -26,7 +26,7 @@ const double alpha = 0.0072973526; // 1/137
 const double PI = 3.14159265358979;
 const double conv2rad = PI / 180.0;
 
-double envelope = 150; // enveloping function of ddBrPi2gxx for rejection sampling
+double envelope = 0; // enveloping function of ddBrPi2gxx for rejection sampling
 
 // model parameter, like coupling constants
 const double epsilon = 1.0;
@@ -35,7 +35,7 @@ const double BrPi2gg = 1e9; // Br(pion -> gamam gamma)
 
 // detector parameters
 double detectorRadius = 1.0; //meters
-double distanceToBox = 40.0; //meters
+double distanceToBox = 100.0; //meters
 
 // store particle information
 struct Particle {
