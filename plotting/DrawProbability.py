@@ -8,9 +8,9 @@ from matplotlib.colors import LinearSegmentedColormap, LogNorm
 import pandas as pd
 
 #
-def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, fileNameOmega, fileNameJpsi, NPOT, mass, charge, a, fileMass,N_gamma=2.5e5): # num of layers
+def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, fileNameOmega, fileNameJpsi, NPOT, mass, charge, a, fileMass, N_gamma=2.5e6): # num of layers
     # EM constant
-    alpha = 1.0 / 137
+    alpha = 1.0 / 137.0
 
     # mass in GeV
     m_e = 0.00051
@@ -21,7 +21,6 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
     m_phi = 1.019
     m_jpsi = 3.1
     m_upsilon = 9.46
-
 
     # meson / NPOT obtained from PYTHIA
     c_pi = 3.98
@@ -55,17 +54,21 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
     ageo_omega = ageo_dataomega[:,1]
     ageo_phi = ageo_dataphi[:,1]
     ageo_pi = ageo_datapi[:,1]
-    ageo_eta = ageo_dataeta[:,2]
+    if fileNameEta == '/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/ageo_darkquest_0.5m.txt':
+        ageo_eta = ageo_dataeta[:,2]
+    else:
+        ageo_eta = ageo_dataeta[:,1]
     ageo_jpsi = ageo_datajpsi[:,1]
-    ageo_upsilon = np.full(200, 0.011462)
+    ageo_upsilon = np.full(mass_upsilon.size, 0.010127)
 
     list_ageo = [ageo_rho, ageo_omega, ageo_phi, ageo_pi, ageo_eta, ageo_jpsi, ageo_upsilon]
-
+    print(fileMass.size)
+    print(charge.size)
     #padding
     for i in range(len(list_ageo)):
-        difference = 200 - np.size(list_ageo[i])
+        difference = fileMass.size - np.size(list_ageo[i])
         list_ageo[i] = np.pad(list_ageo[i], (0, difference), 'constant',  constant_values=0)
-        list_ageo[i] = np.tile(list_ageo[i], (500, 1))
+        list_ageo[i] = np.tile(list_ageo[i], (int(charge.size / fileMass.size), 1))
 
     # Re-assign back to the original variables
     ageo_rho, ageo_omega, ageo_phi, ageo_pi, ageo_eta, ageo_jpsi, ageo_upsilon = list_ageo
@@ -90,29 +93,26 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
     upsilon = np.zeros(np.shape(masses))
 
     # Dalitz decay
-    pi[mass < m_pi/2] = NPOT * ageo_pi[mass < m_pi/2] * 2 * c_pi * branch_pi * alpha * v_I3(mass[mass < m_pi/2] ** 2 / m_pi ** 2) * (1 - np.exp(-N_gamma * charge[mass < m_pi / 2] ** 2)) ** a * charge[mass < m_pi / 2] ** 2
+    pi[mass < m_pi/2] = ageo_pi[mass < m_pi/2] * 2 * c_pi * branch_pi * alpha * v_I3(mass[mass < m_pi/2] ** 2 / m_pi ** 2) * (1 - np.exp(-N_gamma * charge[mass < m_pi / 2] ** 2)) ** a * charge[mass < m_pi / 2] ** 2
 
-    eta[mass < m_eta/2] = NPOT * ageo_eta[mass < m_eta/2] * 2 * c_eta * branch_eta * alpha * v_I3(mass[mass < m_eta/2] ** 2 / m_eta /2 ** 2) * (1 - np.exp(-N_gamma * charge[mass < m_eta / 2] ** 2)) ** a * charge[mass < m_eta / 2] ** 2
+    eta[mass < m_eta/2] = ageo_eta[mass < m_eta/2] * 2 * c_eta * branch_eta * alpha * v_I3(mass[mass < m_eta/2] ** 2 / m_eta ** 2) * (1 - np.exp(-N_gamma * charge[mass < m_eta / 2] ** 2)) ** a * charge[mass < m_eta / 2] ** 2
 
     # Direct decay
-    jpsi[mass < m_jpsi/2] = NPOT * ageo_jpsi[mass < m_jpsi/2] * 2  * c_jpsi * branch_jpsi * I2( mass[mass < m_jpsi/2] ** 2 / m_jpsi ** 2, m_e ** 2 / m_jpsi ** 2  ) * (1 - np.exp(-N_gamma * charge[mass < m_jpsi / 2] ** 2)) ** a * charge[mass < m_jpsi / 2] ** 2
+    jpsi[mass < m_jpsi/2] = ageo_jpsi[mass < m_jpsi/2] * 2  * c_jpsi * branch_jpsi * I2( mass[mass < m_jpsi/2] ** 2 / m_jpsi ** 2, m_e ** 2 / m_jpsi ** 2  ) * (1 - np.exp(-N_gamma * charge[mass < m_jpsi / 2] ** 2)) ** a * charge[mass < m_jpsi / 2] ** 2
 
+    rho[mass < m_rho/2] = ageo_rho[mass < m_rho/2] * 2  * c_rho * branch_rho * I2( mass[mass < m_rho/2] ** 2 / m_rho ** 2, m_e ** 2 / m_rho ** 2  ) * (1 - np.exp(-N_gamma * charge[mass < m_rho / 2] ** 2)) ** a * charge[mass < m_rho / 2] ** 2
 
-    rho[mass < m_rho/2] = NPOT * ageo_rho[mass < m_rho/2] * 2  * c_rho * branch_rho * I2( mass[mass < m_rho/2] ** 2 / m_rho ** 2, m_e ** 2 / m_rho ** 2  ) * (1 - np.exp(-N_gamma * charge[mass < m_rho / 2] ** 2)) ** a * charge[mass < m_rho / 2] ** 2
+    omega[mass < m_omega/2] = ageo_omega[mass < m_omega/2] * 2  * c_omega * branch_omega * I2( mass[mass < m_omega/2] ** 2 / m_omega ** 2, m_e ** 2 / m_omega ** 2  ) * (1 - np.exp(-N_gamma * charge[mass < m_omega / 2] ** 2)) ** a * charge[mass < m_omega / 2] ** 2
 
+    phi[mass < m_phi/2] = ageo_phi[mass < m_phi/2] * 2  * c_phi * branch_phi * I2( mass[mass < m_phi/2] ** 2 / m_phi ** 2, m_e ** 2 / m_phi ** 2  ) * (1 - np.exp(-N_gamma * charge[mass < m_phi / 2] ** 2)) ** a * charge[mass < m_phi / 2] ** 2
 
-    omega[mass < m_omega/2] = NPOT * ageo_omega[mass < m_omega/2] * 2  * c_omega * branch_omega * I2( mass[mass < m_omega/2] ** 2 / m_omega ** 2, m_e ** 2 / m_omega ** 2  ) * (1 - np.exp(-N_gamma * charge[mass < m_omega / 2] ** 2)) ** a * charge[mass < m_omega / 2] ** 2
-
-
-    phi[mass < m_phi/2] = NPOT * ageo_phi[mass < m_phi/2] * 2  * c_phi * branch_phi * I2( mass[mass < m_phi/2] ** 2 / m_phi ** 2, m_e ** 2 / m_phi ** 2  ) * (1 - np.exp(-N_gamma * charge[mass < m_phi / 2] ** 2)) ** a * charge[mass < m_phi / 2] ** 2
-
-    upsilon[mass < m_upsilon/2] = NPOT * ageo_upsilon[mass < m_upsilon/2] * 2  * c_upsilon * branch_upsilon * I2( mass[mass < m_upsilon/2] ** 2 / m_upsilon ** 2, m_e ** 2 / m_upsilon ** 2  )* (1 - np.exp(-N_gamma * charge[mass < m_upsilon / 2] ** 2)) ** a * charge[mass < m_upsilon / 2] ** 2
+    upsilon[mass < m_upsilon/2] = ageo_upsilon[mass < m_upsilon/2] * 2  * c_upsilon * branch_upsilon * I2( mass[mass < m_upsilon/2] ** 2 / m_upsilon ** 2, m_e ** 2 / m_upsilon ** 2  )* (1 - np.exp(-N_gamma * charge[mass < m_upsilon / 2] ** 2)) ** a * charge[mass < m_upsilon / 2] ** 2
 
     sensitivity = pi + eta + jpsi + rho + omega + phi + upsilon
 
-    return sensitivity
+    return sensitivity * NPOT
 
-def dyProduction(fileNamecross, filenamedy, NPOT, charge, a, N_gamma=2.5e5):
+def dyProduction(fileNamecross, filenamedy, NPOT, charge, a, N_gamma=2.5e6):
 
     totalCrossSection = 300e-3
 
@@ -125,21 +125,28 @@ def dyProduction(fileNamecross, filenamedy, NPOT, charge, a, N_gamma=2.5e5):
 
     return NPOT * cross_dy / totalCrossSection * ageo_dy * (1 - np.exp(-N_gamma * charge ** 2)) ** a * charge ** 2
 
-NPOT = 1e17
-mass = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/mchi_values.txt')
+NPOT = 4*1e19
+mass = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/mass_ship.txt')
 charge = np.logspace(-5, 1, 500)
 masses, charges = np.meshgrid(mass, charge)
-
+print(charges.size)
 base = '/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/'
-mesonDecay_dune = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion.txt',
-                                            base + 'ageo_darkquest_0.5m.txt',
-                                            base + 'total_efficiency_output2bodydecay-rho.txt',
-                                            base + 'total_efficiency_output2bodydecay-phi.txt',
-                                            base + 'total_efficiency_output2bodydecay-omega.txt',
-                                            base + 'total_efficiency_output2bodydecay-jsi.txt',
-                                            NPOT, masses, charges, 2, mass))
+mesonDecay_dune = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion1mSpin.txt',
+                              base + 'total_efficiency_outputdecayEta1mSpin.txt',
+                              base + 'total_efficiency_output2bodydecay-rho1mSpin.txt',
+                              base + 'total_efficiency_output2bodydecay-phi1mSpin.txt',
+                              base + 'total_efficiency_output2bodydecay-omega1mSpin.txt',
+                              base + 'total_efficiency_output2bodydecay-jsi1mSpin.txt',
+                              NPOT, masses, charges, 2, mass))
+# mesonDecay_dune = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion.txt',
+#                                                 base + 'ageo_darkquest_0.5m.txt',
+#                                                 base + 'total_efficiency_output2bodydecay-rho.txt',
+#                                                 base + 'total_efficiency_output2bodydecay-phi.txt',
+#                                                 base + 'total_efficiency_output2bodydecay-omega.txt',
+#                                                 base + 'total_efficiency_output2bodydecay-jsi.txt',
+#                                                 NPOT, masses, charges, 2, mass))
 
-# mesonDecay_numi = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion1m.txt',
+# mesonDecay_dune = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion1m.txt',
 #                                             base + 'total_efficiency_outputdecayEta1m.txt',
 #                                             base + 'total_efficiency_output2bodydecay-rho1m.txt',
 #                                             base + 'total_efficiency_output2bodydecay-phi1m.txt',
@@ -148,9 +155,8 @@ mesonDecay_dune = list(mesonDecayProduction(base + 'total_efficiency_outputdecay
 #                                             NPOT, masses, charges, 2))
 
 # get DY production
-dy_dune = dyProduction(base+'efficiency_dy_dark.txt', base+'dy_cross_dark.txt', NPOT, charges, 2)
-# dy_numi = dyProduction(base+'efficiency_dy_dark.txt', base+'dy_cross_dark.txt', NPOT, charges, 2)
-
+# dy_dune = dyProduction(base+'efficiency_dy_dark.txt', base+'dy_cross_dark.txt', NPOT, charges, 2)
+dy_dune = dyProduction(base+'efficiency_dy_ship_1m.txt', base+'dy_cross_ship.txt', NPOT, charges, 2)
 total_dune = dy_dune + mesonDecay_dune
 
 print("Generation completed")
@@ -199,8 +205,8 @@ plt.yticks(fontsize = 35)
 plt.xlim(0.01, 10)
 plt.ylim(0.000005, 1)
 plt.legend(loc='upper left', fontsize=18.5)
-plt.savefig('sensitivity_longquest1e18N_gamma2.5e5.png')
-print("sensitivity_longquest.png drawn")
+plt.savefig('limit-plot-LongQuest-' + str(NPOT) + '.png')
+print("limit plot drawn")
 
 # Corrected second plot for heatmap
 figure(figsize=(22, 16), dpi=500)
