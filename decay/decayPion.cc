@@ -27,6 +27,8 @@ const double PI = 3.14159265358979;
 const double conv2rad = PI / 180.0;
 
 double envelope = 0; // enveloping function of ddBrPi2gxx for rejection sampling
+const int burnin = 20000;
+const int burninCounter = 0;
 
 // model parameter, like coupling constants
 const double epsilon = 1.0;
@@ -135,8 +137,8 @@ int main(int argc, char* argv[]) {
         momPhi = lorentzVector.phi();
         // Get the polar angle (theta)
         momTheta = lorentzVector.theta();
-        // Get Magnitude
-        momP = lorentzVector.mag();
+        // Get Magnitude of three momentum
+        momP = lorentzVector.P();
 
         double s, theta;
         while (true) {
@@ -146,9 +148,11 @@ int main(int argc, char* argv[]) {
             // cout << y << endl;
             if (y >= rand.Uniform(0, 1) * envelope) {
                 // renew envelope when y > envelope
-                if (y > envelope)
+                if (y > envelope) {
                     envelope = y;
-                break;
+                    burninCounter++;
+                }
+                if (burninCounter > burnin) break;
             }
         }
 
