@@ -11,7 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 project(decayPionProject)
 
 # Locate the ROOT package and define a number of useful targets and variables.
-find_package(ROOT 6.32 CONFIG REQUIRED)
+find_package(ROOT 6.34 CONFIG REQUIRED)
 include_directories(${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
 
 # Create a shared library.
@@ -23,12 +23,16 @@ include_directories(${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
 
 # Create the main program using the library.
 add_executable(decayPion decayPion.cc)
+add_executable(generatePion generatePion.cc)
 add_executable(decayVectorMeson decayVectorMeson.cc)
-add_executable(plot_efficiency sensitivity-plot/plot_efficiency.cpp)
+add_executable(lanl-decayPion lanl-decayPion.cc)
+#add_executable(plot_efficiency sensitivity-plot/plot_efficiency.cpp)
 
 target_link_libraries(decayPion PUBLIC ROOT::Tree ROOT::Physics ROOT::TreePlayer)
 target_link_libraries(decayVectorMeson PUBLIC ROOT::Tree ROOT::Physics ROOT::TreePlayer)
-target_link_libraries(plot_efficiency PUBLIC ROOT::Core ROOT::Graf ROOT::Graf3d ROOT::Gpad ROOT::Hist ROOT::RIO ROOT::MathCore ROOT::Physics ROOT::Tree ROOT::Rint)
+#target_link_libraries(plot_efficiency PUBLIC ROOT::Core ROOT::Graf ROOT::Graf3d ROOT::Gpad ROOT::Hist ROOT::RIO ROOT::MathCore ROOT::Physics ROOT::Tree ROOT::Rint)
+target_link_libraries(generatePion PUBLIC ROOT::Core ROOT::Graf ROOT::Graf3d ROOT::Gpad ROOT::Hist ROOT::RIO ROOT::MathCore ROOT::Physics ROOT::Tree ROOT::Rint)
 
+target_link_libraries(lanl-decayPion PUBLIC ROOT::Core ROOT::Graf ROOT::Graf3d ROOT::Gpad ROOT::Hist ROOT::RIO ROOT::MathCore ROOT::Physics ROOT::Tree ROOT::Rint)
 
 

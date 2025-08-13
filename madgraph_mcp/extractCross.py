@@ -2,7 +2,7 @@ import re
 
 with open('dy_cross.txt', 'w') as output_file:
     # Open the HTML file and read line by line
-    with open('crossx.html', 'r') as file:
+    with open('DY-output-test1/crossx.html', 'r') as file:
         for line in file:
             # Find and extract characters between 'results.html">' and '<font face=symbol>&#177'
             pattern = r'results.html">(.+?)<font face=symbol>&#177'

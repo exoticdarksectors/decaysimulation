@@ -18,11 +18,11 @@ using namespace std;
 void* handler(void *t_argv);
 
 
-// usage : program_name [seed] [nCores] [nEvents]
+// usage : program_name [seed] [nCores] [nEvents] [mesonID]
 int main(int argc, char *argv[])
 {
     if (argc < 5) {
-        cout << "REQUIRED FORMAT : submet [seed] [nCores] [nEvents]" << endl;
+        cout << "REQUIRED FORMAT : submet [seed] [nCores] [nEvents] [mesonID]" << endl;
         return -1;
     }
 
@@ -65,7 +65,12 @@ void* handler(void *t_argv)
 
     // define root file
     TFile* output = new TFile( Form( "../output-data/mesons_seed%d_t%d.root", seed, ith) , "RECREATE" );
-    
+	if (!output->IsOpen()) {
+		std::cerr << "ERROR: Could not open output file: "
+				  << output->GetName() << "\n";
+	} else {
+		std::cout << "Writing to file: " << output->GetName() << "\n";
+	}
     // define kinematic variables
     int id;
     double px, py, pz, pt, p, m, e, mag, phi, theta;
