@@ -1,4 +1,0 @@
-P1_uux_chichix
-P1_ccx_chichix
-P1_ddx_chichix
-P1_ssx_chichix

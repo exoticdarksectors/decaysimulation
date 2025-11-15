@@ -34,8 +34,8 @@ const double epsilon = 1.0;
 const double BrPi2gg = 1e9; // Br(pion -> gamam gamma)
 
 // detector parameters
-double detectorRadius = 1.0; //meters
-double distanceToBox = 100.0; //meters
+double detectorRadius = 0.5; //meters
+double distanceToBox = 40.0; //meters
 
 // store particle information
 struct Particle {
@@ -57,7 +57,6 @@ double ddBrPi2gxx(double s, double theta, double mchi, double mMother) {
     return sin(theta) * pow(epsilon, 2) * alpha / (4 * PI * s) * pow(1 - s / pow(mMother, 2), 3) *
            sqrt(1 - 4 * pow(mchi, 2) / s) * (2 - (1 - 4 * pow(mchi, 2) / s) * pow(sin(theta), 2)) * BrPi2gg;
 }
-
 
 int main(int argc, char* argv[]) {
 
@@ -136,7 +135,7 @@ int main(int argc, char* argv[]) {
         // Get the polar angle (theta)
         momTheta = lorentzVector.theta();
         // Get Magnitude
-        momP = lorentzVector.mag();
+        momP = lorentzVector.P();
 
         double s, theta;
         while (true) {
@@ -168,17 +167,11 @@ int main(int argc, char* argv[]) {
         double vP = lambda(mMother, sqrt(s), 0); // pion -> V + gamma, mass of gamma = 0
         double vBeta = vP / sqrt(vP * vP + s);
         // // cout << "vBeta : " << vBeta << endl;
-        // mcp1.momentum.Boost(0, 0, vBeta);
-        // mcp2.momentum.Boost(0, 0, vBeta);
 
         double vTheta = rand.Uniform(0.0, PI);
         double vPhi = rand.Uniform(-PI, PI);
 
-        // rotate z axis of V back to pion rest frame
-        // mcp1.momentum.RotateZ(vTheta);
-        // mcp1.momentum.RotateY(vPHI);
-        // mcp2.momentum.RotateY(vPHI);
-        // mcp2.momentum.RotateZ(vTheta);
+        // rotate z axis of V back to pion rest frame and boost in same step
         mcp1.momentum.Boost(vBeta * sin(vTheta) * cos(vPhi), vBeta * sin(vTheta) * sin(vPhi), vBeta * cos(vTheta));
         mcp2.momentum.Boost(vBeta * sin(vTheta) * cos(vPhi), vBeta * sin(vTheta) * sin(vPhi), vBeta * cos(vTheta));
 
@@ -258,7 +251,7 @@ int main(int argc, char* argv[]) {
     cout << "Completed Successfully!" << endl;
     cout << "Output stored in: " << argv[2] << endl;
 
-    std::string output_filename = "../sensitivity-plot/" + std::string(argv[5]);
+    std::string output_filename = "../plotting/sensitivity-plot/" + std::string(argv[5]);
 
     // Create an ofstream object to write to the file
     std::ofstream output_file(output_filename);
@@ -271,6 +264,7 @@ int main(int argc, char* argv[]) {
         // Close the file
         output_file.close();
         std::cout << "Efficiency written to " << output_filename << std::endl;
+        std::cout << "Number of mcps accepted " << filteredTreeSize << std::endl;
     } else {
         std::cerr << "Error: Unable to open file " << output_filename << std::endl;
         return 1;

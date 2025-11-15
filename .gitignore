@@ -42,7 +42,17 @@ mesongen/.idea
 # CMake build folders
 decay/cmake-build-debug
 mesongen/cmake-build-debug
+decay/cmake-build-release
 
 # Output data folders
 mesongen/output-data/
 decay/output-data/
+
+#PBrem Data files
+/V1/
+/V2/
+/double_track/
+/double_track_updated/
+/single_hit_or_shared_bar/
+/single_track/
+/single_track_updated/

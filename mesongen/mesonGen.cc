@@ -1,4 +1,4 @@
-// This Pythia script generates p-p fixed target collision events 
+// This Pythia script generates p-p fixed target collision events
 // and stoe momentum of pi0, eta, J/psi and upsilon
 // Author : Insung Hwang (his5624@korea.ac.kr)
 // Editor: Leo Bailloeul (lbailloeul@gmail.com)
@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
 	int idNumber = strtol(argv[4], NULL, 10);
     int nJobs = nEvents / nCores;
     cout << "seed : " << seed << "    nCores : " << nCores << "    nJobs : " << nJobs << endl;
-    
-    // define threads for multi-threading 
+
+    // define threads for multi-threading
     TThread* th[nCores];
     int thread_argv[4];
     thread_argv[0] = seed;
@@ -49,15 +49,15 @@ int main(int argc, char *argv[])
     }
 
     // join works when each josbs are finished
-    for(int i = 0; i < nCores; i++) 
+    for(int i = 0; i < nCores; i++)
         th[i]->Join();
     return 0;
 }
 
 void* handler(void *t_argv)
 {
-    int *parameters = (int *) t_argv; 
-    
+    int *parameters = (int *) t_argv;
+
     int seed = parameters[0];
     int nJobs = parameters[1];
     int ith = parameters[2];
@@ -65,12 +65,12 @@ void* handler(void *t_argv)
 
     // define root file
     TFile* output = new TFile( Form( "../output-data/mesons_seed%d_t%d.root", seed, ith) , "RECREATE" );
-    
+
     // define kinematic variables
     int id;
     double px, py, pz, pt, p, m, e, mag, phi, theta;
 	double x, y, z;
-    
+
     // create branches
     TTree *tree = new TTree("mesons", "mesons");
     tree->Branch("id", &id);
@@ -80,20 +80,19 @@ void* handler(void *t_argv)
     tree->Branch("mass",   &m);
 	tree->Branch("phi", &phi);
 	tree->Branch("theta", &theta);
-	tree->Branch("mass",   &m);
 	tree->Branch("e",   &e);
 	tree->Branch("magnitude",   &mag);
 
 
     // create pythia generator
     Pythia8::Pythia pythia;
-    
+
     // read beam properties
     pythia.readFile("beam.config");
     pythia.readFile("momentum.config");
-    
+
     // define random seed
-    pythia.readString("Random:setSeed = on"); // use random seed 
+    pythia.readString("Random:setSeed = on"); // use random seed
     pythia.readString(Form("Random:seed = %d", seed + ith)); // + ith to prevent redundant event generation
 
     pythia.init();

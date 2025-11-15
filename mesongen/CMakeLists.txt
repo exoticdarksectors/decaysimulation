@@ -11,7 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 project(mesonGenProject)
 
 # Locate the ROOT package and define a number of useful targets and variables.
-find_package(ROOT 6.28 CONFIG REQUIRED)
+find_package(ROOT 6.34 CONFIG REQUIRED)
 
 # Find Pythia8 -- hardcoded paths for now
 set(PYTHIA8 "/Users/leobailloeul/Documents/coding/software/pythia8309")
