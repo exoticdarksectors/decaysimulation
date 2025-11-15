@@ -71,28 +71,28 @@ declare -a two_body_input_files
 declare -a two_body_output_files
 
 two_body_input_files=(
-   "${base_directory}/mesongen/output-data/mesons_seed1234_443.root"
-#    "${base_directory}/mesongen/output-data/mesons_seed1234_113.root"
-#    "${base_directory}/mesongen/output-data/mesons_seed1234_223.root"
-#    "${base_directory}/mesongen/output-data/mesons_seed1234_333.root"
+   "${base_directory}/mesongen/output-data/mesons_seed1234_443_SHIP.root"
+   "${base_directory}/mesongen/output-data/mesons_seed1234_113_SHIP.root"
+   "${base_directory}/mesongen/output-data/mesons_seed1234_223_SHIP.root"
+   "${base_directory}/mesongen/output-data/mesons_seed1234_333_SHIP.root"
 )
 two_body_output_files=(
-   "${base_directory}/decay/output-data/mcp-production-decay-vector-meson-jsi.root"
-   # "${base_directory}/decay/output-data/mcp-production-decay-vector-meson-rho.root"
-   # "${base_directory}/decay/output-data/mcp-production-decay-vector-meson-omega.root"
-   # "${base_directory}/decay/output-data/mcp-production-decay-vector-meson-phi.root"
+   "${base_directory}/decay/output-data/mcp-production-decay-vector-meson-jsi-SHIP-1m.root"
+   "${base_directory}/decay/output-data/mcp-production-decay-vector-meson-rho-SHIP-1m.root"
+   "${base_directory}/decay/output-data/mcp-production-decay-vector-meson-omega-SHIP-1m.root"
+   "${base_directory}/decay/output-data/mcp-production-decay-vector-meson-phi-SHIP-1m.root"
 )
 
 declare -a three_body_input_file
 declare -a three_body_output_file
 
 three_body_input_file=(
-"${base_directory}/mesongen/output-data/mesons_seed1234_111.root"
-"${base_directory}/mesongen/output-data/mesons_seed1234_221.root"
+"${base_directory}/mesongen/output-data/mesons_seed1234_111_SHIP.root"
+"${base_directory}/mesongen/output-data/mesons_seed1234_221_SHIP.root"
 )
 three_body_output_file=(
-"${base_directory}/decay/output-data/mcp-production574mjsi.root"
-"${base_directory}/decay/output-data/mcp-production574meta.root"
+"${base_directory}/decay/output-data/mcp-production100mpi0-1m.root"
+"${base_directory}/decay/output-data/mcp-production100meta-1m.root"
 )
 
 declare -a efficiency_output_2bodydecay
@@ -100,16 +100,16 @@ declare -a total_efficiency_output_2bodydecay
 
 efficiency_output_2bodydecay=(
    "efficiency-output2bodydecay-jsi.txt"
-   # "efficiency-output2bodydecay-rho.txt"
-   # "efficiency-output2bodydecay-omega.txt"
-   # "efficiency-output2bodydecay-phi.txt"
+   "efficiency-output2bodydecay-rho.txt"
+   "efficiency-output2bodydecay-omega.txt"
+   "efficiency-output2bodydecay-phi.txt"
 )
 
 total_efficiency_output_2bodydecay=(
-   "${base_directory}/plotting/sensitivity-plot/total_efficiency_output2bodydecay-jsi574mSpin.txt"
-   # "${base_directory}/plotting/sensitivity-plot/total_efficiency_output2bodydecay-rho574mSpin.txt"
-   # "${base_directory}/plotting/sensitivity-plot/total_efficiency_output2bodydecay-omega574mSpin.txt"
-   # "${base_directory}/plotting/sensitivity-plot/total_efficiency_output2bodydecay-phi574mSpin.txt"
+   "${base_directory}/plotting/sensitivity-plot/total_efficiency_output2bodydecay-jsi-SHIP-1m.txt"
+   "${base_directory}/plotting/sensitivity-plot/total_efficiency_output2bodydecay-rho-SHIP-1m.txt"
+   "${base_directory}/plotting/sensitivity-plot/total_efficiency_output2bodydecay-omega-SHIP-1m.txt"
+   "${base_directory}/plotting/sensitivity-plot/total_efficiency_output2bodydecay-phi-SHIP-1m.txt"
 )
 
 declare -a efficiency_output_three_body
@@ -121,8 +121,8 @@ efficiency_output_three_body=(
 )
 
 total_efficiency_output_three_body=(
- "${base_directory}/plotting/sensitivity-plot/total_efficiency_outputdecayPion574mSpin.txt"
- "${base_directory}/plotting/sensitivity-plot/total_efficiency_outputdecayEta574mSpin.txt"
+ "${base_directory}/plotting/sensitivity-plot/total_efficiency_outputdecayPion_SHIP-1m.txt"
+ "${base_directory}/plotting/sensitivity-plot/total_efficiency_outputdecayEta_SHIP-1m.txt"
 )
 declare -a three_body_masses
 three_body_masses=(

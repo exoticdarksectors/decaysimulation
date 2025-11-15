@@ -34,8 +34,8 @@ const double epsilon = 1.0;
 const double BrPi2gg = 1e9; // Br(pion -> gamam gamma)
 
 // detector parameters
-double detectorRadius = 0.56418958354; //meters
-double distanceToBox = 574.0; //meters
+double detectorRadius = 0.5; //meters
+double distanceToBox = 40.0; //meters
 
 // store particle information
 struct Particle {
@@ -251,7 +251,7 @@ int main(int argc, char* argv[]) {
     cout << "Completed Successfully!" << endl;
     cout << "Output stored in: " << argv[2] << endl;
 
-    std::string output_filename = "../sensitivity-plot/" + std::string(argv[5]);
+    std::string output_filename = "../plotting/sensitivity-plot/" + std::string(argv[5]);
 
     // Create an ofstream object to write to the file
     std::ofstream output_file(output_filename);
