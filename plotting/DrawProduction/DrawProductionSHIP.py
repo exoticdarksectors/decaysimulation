@@ -1,37 +1,17 @@
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-from matplotlib.ticker import ScalarFormatter
 from scipy.integrate import quad
-# define matplotlib pgf output settings
-# matplotlib.use("pgf")
-import os, glob
+import glob, os
 
-# Update Matplotlib parameters to not use LaTeX for rendering
-matplotlib.rcParams.update({
-    'font.family': 'serif',  # Use a serif font
-    'text.usetex': False,    # Disable LaTeX rendering
-})
-
-# define matplotlib parameters
-# SMALL_SIZE = 20
-# MEDIUM_SIZE = 20
-# BIGGER_SIZE = 20
-#
-# plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-# plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-# plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-# plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-# plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-# plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-# plt.rc('figure', titlesize=BIGGER_SIZE + 5)  # fontsize of the figure title
-
+plt.rcParams['mathtext.fontset'] = 'cm'
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['xtick.labelsize'] = 16
+plt.rcParams['ytick.labelsize'] = 16
 
 def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, fileNameOmega, fileNameJpsi, NPOT, fileMass):
+    # Constants
     # EM constant
     alpha = 1.0 / 137
-
     # mass in GeV
     m_e = 0.00051
     m_pi = 0.135
@@ -41,16 +21,14 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
     m_phi = 1.019
     m_jpsi = 3.1
     m_upsilon = 9.46
-
     # meson / NPOT obtained from PYTHIA
-    c_pi = 7.48938
-    c_eta = 0.8508
-    c_rho = 1.012505
-    c_omega = 1.007351
-    c_phi = 2.16297e-2
-    c_jpsi = 8.335e-5
-    c_upsilon = 5.46916010499e-9
-
+    c_pi = 7.5
+    c_eta = 0.85
+    c_rho = 1.0
+    c_omega = 1.0
+    c_phi = 4.1e-02
+    c_jpsi = 8.3e-5
+    c_upsilon = 5.5e-9
     # m -> e+e- branching ratio
     branch_pi = 0.98
     branch_eta = 0.39
@@ -68,6 +46,13 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
     ageo_dataomega = np.loadtxt(fileNameOmega)
     ageo_datajpsi = np.loadtxt(fileNameJpsi)
 
+    ageo_rho = ageo_datarho[:, 1]
+    ageo_omega = ageo_dataomega[:, 1]
+    ageo_phi = ageo_dataphi[:, 1]
+    ageo_pi = ageo_datapi[:, 1]
+    ageo_jpsi = ageo_datajpsi[:, 1]
+    ageo_eta = ageo_dataeta[:, 1]
+
     # Separate efficiency and mass
     mass_rho = ageo_datarho[:,0]
     mass_omega = ageo_dataomega[:,0]
@@ -77,33 +62,15 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
     mass_jpsi = ageo_datajpsi[:,0]
     mass_upsilon = fileMass[:]
 
-    ageo_rho = ageo_datarho[:,1]
-    ageo_omega = ageo_dataomega[:,1]
-    ageo_phi = ageo_dataphi[:,1]
-    ageo_pi = ageo_datapi[:,1]
-    ageo_jpsi = ageo_datajpsi[:,1]
-    # special case for abnormal file structures
-    if fileNameEta == '/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/ageo_darkquest_0.5m.txt':
-        ageo_eta = ageo_dataeta[:,2]
-    else:
-        ageo_eta = ageo_dataeta[:,1]
-    if fileNameJpsi == '/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/total_efficiency_output2bodydecay-jsi.txt':
-        # ageo_upsilon = np.full(mass_upsilon.size, 0.039232)
-        ageo_upsilon = np.full(mass_upsilon.size, 0.011338)
-    else:
-        # ageo_upsilon = np.full(mass_upsilon.size, 0.039232)
-        ageo_upsilon = np.full(mass_upsilon.size, 0.011338)
+    ageo_upsilon = np.full(mass_upsilon.size, 0.011338) #taken from J/psi efficiency at 1e-3 GeV
 
     # define phase space integrals
     def I2(x, y):
         return ((1 + 2 * x) * np.sqrt(1 - 4 * x)) / ((1 + 2 * y) * np.sqrt(1 - 4 * y))
-
     def I3_integrand(z, x):
         return 2 / (3 * 3.14) * np.sqrt(1 - 4 * x / z) * ((1 - z) ** 3) * (2 * x + z) / (z ** 2)
-
     def I3(x):
         return quad(I3_integrand, 4 * x, 1, args=x)[0]  # integrate
-
     v_I3 = np.vectorize(I3) # vectorize
 
     # define productions
@@ -114,14 +81,6 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
     jpsi = np.zeros(np.shape(mass_jpsi))
     rho = np.zeros(np.shape(mass_rho))
     upsilon = np.zeros(np.shape(mass_upsilon))
-
-    # masking to achieve kinematical validity
-    # Dalitz decay
-    #    pi[mass] = NPOT * ageo_pi[mass] * 2 * c_pi * branch_pi * alpha * v_I3( mass[mass] ** 2 / mass[mass] ** 2)
-    #    eta[mass] = NPOT * ageo_eta[mass] * 2 * c_eta * branch_eta * alpha * v_I3( mass[mass] ** 2 / mass[mass] ** 2)
-    #    # Direct decay
-    #    jpsi[mass] = NPOT * ageo_jpsi[mass] * 2  * c_jpsi * branch_jpsi * I2( mass[mass] ** 2 / m_jpsi ** 2, m_e ** 2 / m_jpsi ** 2  )
-    #    upsilon[mass] = NPOT * ageo_upsilon[mass] * 2 * c_upsilon * branch_upsilon * I2( mass[mass] ** 2 / m_upsilon ** 2, m_e ** 2 / m_upsilon ** 2  )
 
     # Dalitz decay
     pi[mass_pi < m_pi/2] = NPOT * ageo_pi[mass_pi < m_pi/2] * 2 * c_pi * branch_pi * alpha * v_I3( mass_pi[mass_pi < m_pi/2] ** 2 / m_pi ** 2)
@@ -136,334 +95,220 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
 
     return pi, eta, jpsi, upsilon, rho, omega, phi
 
-def protonBremSeries(
+def _effective_lumi_pb(N_POT=0, rho=0, L=0, A=0):
+    """
+    Compute effective luminosity in pb^-1: L_eff = N_POT * (rho * L / A) * N_A
+    """
+    NA = 6.02214076e23  # /mol
+    nuclei_per_cm2 = (rho * L / A) * NA
+    L_eff_cm2 = N_POT * nuclei_per_cm2
+    return L_eff_cm2 / 1e36 # convert 1/cm^2 units to pb^-1
+
+def brem_single_hit_or_shared_v2(
         directory,
-        pattern="mCPs_Brem_120GeV_*.txt",
-        theta_cut=None,
-        theta_in_degrees=False,
-        pot_scale=None,   # None => use file normalization as-is; otherwise multiply by this factor
+        pattern="Brem_*.txt",
+        det_angle=0,   # radians
+        epsilon=1.0,
+        lambda_idx=1, # 0:1.0 GeV, 1:1.5 GeV, 2:2.0 GeV
+        N_POT=0, rho=0, L=0, A=0
 ):
     """
-    Read proton-brem yields from files named 'mCPs_Brem_120GeV_<mass>.txt'.
-    Each file must have columns: log10theta, log10p, sigma_bin, Nmcp_bin.
-
-    Returns
-    -------
-    masses : np.ndarray  (sorted)
-    yields : np.ndarray  (aligned with masses)
+    Reads single_hit_or_shared files with the following this structure:
+      log10(theta), log10(p/GeV), sigma_L1, sigma_L1p5, sigma_L2   [pb/bin]
+    Returns: masses, # of track
     """
-    if theta_cut is None:
-        theta_cut = np.arctan(0.5/40.0)  # 0.5 m radius at 40 m
-
     files = sorted(glob.glob(os.path.join(directory, pattern)))
     if not files:
-        print(f"⚠️ No brem files found in {directory} matching {pattern}")
         return np.array([]), np.array([])
+    L_eff = _effective_lumi_pb(N_POT, rho, L, A)
+    log10_theta_cut = np.log10(det_angle)
 
-    masses, yields = [], []
-
+    masses, tracks = [], []
     for f in files:
-        base = os.path.basename(f)
-        # parse mass from "..._<mass>.txt"
         try:
-            mchi = float(base.split('_')[-1].replace('.txt', ''))
+            mchi = float(os.path.basename(f).split('_')[-1].replace('.txt', ''))
         except Exception:
             continue
 
         arr = np.loadtxt(f, comments="#")
-        if arr.ndim == 1:
-            arr = arr[None, :]
-        if arr.shape[1] < 4:
-            print(f"⚠️ Unexpected column count in {f}; need ≥4. Skipping.")
+        if arr.ndim == 1: arr = arr[None, :]
+        if arr.shape[1] < 5:  # need 3 sigma columns
             continue
 
-        log10theta, log10p, sigma_bin, Nmcp_bin = arr.T
-        theta = 10.0**log10theta
-        if theta_in_degrees:
-            theta = np.deg2rad(theta)
+        log10theta = arr[:, 0]
+        sigmas = arr[:, 2:5]  # [nbins, 3]
+        if lambda_idx not in (0, 1, 2):
+            raise ValueError("lambda_idx must be 0, 1, or 2")
 
-        mask = (theta < theta_cut)
-        N_tot = Nmcp_bin[mask].sum()
+        # acceptance on the listed particle
+        mask = (log10theta < log10_theta_cut)
+        sigma_sum_pb = sigmas[mask, lambda_idx].sum()
 
-        if pot_scale is not None:
-            N_tot *= pot_scale  # e.g., NPOT/POT_ref
+        N_tracks = (epsilon**2) * L_eff * sigma_sum_pb
 
         masses.append(mchi)
-        yields.append(N_tot)
+        tracks.append(N_tracks)
 
-    if not masses:
-        return np.array([]), np.array([])
+    masses = np.asarray(masses); tracks = np.asarray(tracks)
+    idx = np.argsort(masses)
+    return masses[idx], tracks[idx]
 
-    masses = np.asarray(masses)
-    yields = np.asarray(yields)
-
-    # sort by mass
-    order = np.argsort(masses)
-    return masses[order], yields[order]
-
-
-def dyProduction(fileNamecross, filenamedy, NPOT, totalCrossSection):
-
-    # totalCrossSection = 300e-3
-
-    # Import Data from efficiency files
+def dyProductionTOT(fileNamecross, filenamedy, NPOT, totalCrossSection):
+    # import data from efficiency files
     ageo_datacross = np.loadtxt(fileNamecross)
     ageo_datady = np.loadtxt(filenamedy)
 
-    cross_dy = ageo_datacross[:,1] * 1e-12 # pico barn
-    ageo_dy = ageo_datady[:]
+    # mass = ageo_datady[:, 0]
+    cross_dy = ageo_datacross[:] * 1e-12 # pico barn
+    ageo_dy = ageo_datady[:,1]
 
     return NPOT * cross_dy / totalCrossSection * ageo_dy
 
+def dyProduction(fileNamecross, filenamedy, NPOT, totalCrossSection, cutoff=1.0):
+    # Load data
+    ageo_datacross = np.loadtxt(fileNamecross)
+    ageo_datady    = np.loadtxt(filenamedy)
+
+    # Extract columns
+    mass    = ageo_datady[:, 0]
+    ageo_dy = ageo_datady[:, 1]
+
+    # cross_dy
+    if ageo_datacross.ndim == 1:
+        cross_dy = ageo_datacross
+    else:
+        cross_dy = ageo_datacross[:, 0]
+
+    cross_dy = cross_dy * 1e-12
+
+    n = min(mass.shape[0], cross_dy.shape[0], ageo_dy.shape[0])
+    mass    = mass[:n]
+    ageo_dy = ageo_dy[:n]
+    cross_dy = cross_dy[:n]
+
+    # Compute production
+    dy_prod = NPOT * cross_dy / totalCrossSection * ageo_dy
+    dy_prod[mass < cutoff] = np.nan
+    return dy_prod
+
 if __name__ == '__main__':
-    # read the original mass file
-    #    mass = np.array([])
-    #    with open('mass.txt', 'r') as f:
-    #        data = f.readline()
-    #        for line in data:
-    # values = line.strip().split()
-    #            print(line)
-    #            np.append(mass, float(line) )
-    mass_dark = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/mchi_values.txt')
-    mass_ship = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/mship_values.txt')
-    # mass_ship = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/mass_ship.txt')
-    # get decay production
-    NPOT_dark = 2e20
-    NPOT2_dark = 1e17
-    NPOT_ship = 4e19
-    #   pi_numi, eta_numi, jpsi_numi, upsilon_numi = mesonDecayProduction(numi)
-    #   pi_dune, eta_dune, jpsi_dune, upsilon_dune = mesonDecayProduction(dune)
-    base = '/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/'
-    # mesonDecay_dark = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion574mSpin.txt',
-    #                                             base + 'total_efficiency_outputdecayEta574mSpin.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-rho574mSpin.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-phi574mSpin.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-omega574mSpin.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-jsi574mSpin.txt',
-    #                                             NPOT_dark, mass_dark))
-    # mesonDecay_dark = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion.txt',
-    #                                             base + 'total_efficiency_outputdecayEta.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-rho.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-phi.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-omega.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-jsi.txt',
-    #                                             NPOT_dark, mass_dark))
-    # mesonDecay_dark = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion.txt',
-    #                                             base + 'ageo_darkquest_0.5m.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-rho.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-phi.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-omega.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-jsi.txt',
-    #                                             NPOT_dark, mass_dark))
-    # mesonDecay_ship = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion.txt',
-    #                                             base + 'ageo_darkquest_0.5m.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-rho.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-phi.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-omega.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-jsi.txt',
-    #                                             NPOT2_dark, mass_dark))
-    mesonDecay_ship = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion_SHIP-1m.txt',
-                                                base + 'total_efficiency_outputdecayEta_SHIP-1m.txt',
-                                                base + 'total_efficiency_output2bodydecay-rho-SHIP-1m.txt',
-                                                base + 'total_efficiency_output2bodydecay-phi-SHIP-1m.txt',
-                                                base + 'total_efficiency_output2bodydecay-omega-SHIP-1m.txt',
-                                                base + 'total_efficiency_output2bodydecay-jsi-SHIP-1m.txt',
-                                                NPOT_dark, mass_dark))
+    base = '/Users/leobailloeul/Documents/coding/Archive-dec-9-2025/data-backup/'
+    mass_ship = np.loadtxt(base + 'mship_values_copy.txt')
+    NPOT_SHiP = 2e20
 
-    # mesonDecay_ship = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion1m.txt',
-    #                                             base + 'total_efficiency_outputdecayEta1m.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-rho1m.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-phi1m.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-omega1m.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-jsi1m.txt',
-    #                                             NPOT2_dark, mass_dark))
+    mesonDecay_ship = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion_SHIP-1m-small.txt',
+                                                base + 'total_efficiency_outputdecayEta_SHIP-1m-small.txt',
+                                                base + 'total_efficiency_output2bodydecay-rho-SHIP.txt',
+                                                base + 'total_efficiency_output2bodydecay-phi-SHIP.txt',
+                                                base + 'total_efficiency_output2bodydecay-omega-SHIP.txt',
+                                                base + 'total_efficiency_output2body_decay-jsi-SHiP.txt',
+                                                NPOT_SHiP, mass_ship))
 
+    # DY production
+    dy_ship = dyProduction(base+'dy_cross_ship_nCTEQ15_iron.txt', base+'ageo_ship_nCTEQ_iron.txt', NPOT_SHiP, 13e-3)
+    dy_shiptot = dyProductionTOT(base+'dy_cross_ship_nCTEQ15_iron.txt', base+'ageo_ship_nCTEQ_iron.txt', NPOT_SHiP, 13e-3)
 
-    # mesonDecay_ship = list(mesonDecayProduction(base + 'total_efficiency_outputdecayPion1mSpin.txt',
-    #                                             base + 'total_efficiency_outputdecayEta1mSpin.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-rho1mSpin.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-phi1mSpin.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-omega1mSpin.txt',
-    #                                             base + 'total_efficiency_output2bodydecay-jsi1mSpin.txt',
-    #                                             NPOT_ship, mass_ship))
-
-    # print(mesonDecay_numi[6])
-
-    # get DY production
-    # dy_dark = dyProduction(base+'ageo_dy.txt', base+'dy_cross.txt', NPOT_dark, 300e-3)
-    # dy_numi = dyProduction(base+'efficiency_dy_dark.txt', base+'dy_cross_dark.txt', NPOT)
-
-    dy_ship = dyProduction(base+'ageo_dy_ship_0.5m_final.txt', base+'dy_cross_ship_final.txt', NPOT_dark, 260e-3)
-    # dy_ship = dyProduction(base+'efficiency_dy_ship_1m.txt', base+'dy_cross_ship.txt', NPOT_ship, 260e-3)
     # add paddings
     for i in range(len(mesonDecay_ship)):
-        difference = dy_ship.size - mesonDecay_ship[i].size
+        difference = mass_ship.size - mesonDecay_ship[i].size
         mesonDecay_ship[i] = np.pad(mesonDecay_ship[i], (0, difference), 'constant',  constant_values=0)
-    # for i in range(len(mesonDecay_dark)):
-    #     difference = mass_dark.size - mesonDecay_dark[i].size
-    #     mesonDecay_dark[i] = np.pad(mesonDecay_dark[i], (0, difference), 'constant',  constant_values=0)
 
-    # if mass_dark is shorter than dy_ship, you’ll also need to extend it
-    if mass_dark.size < dy_ship.size:
-        r = mass_dark[1] / mass_dark[0]  # log spacing ratio
-        extra = [mass_dark[-1] * r**k for k in range(1, dy_ship.size - mass_dark.size + 1)]
-        mass_dark = np.concatenate([mass_dark, extra])
+    difference1 = mass_ship.size - dy_shiptot.size
+    dy_shiptot = np.pad(dy_shiptot, (0, difference1), 'constant', constant_values=0)
 
-    # now everything matches dy_ship length
-    total_ship = dy_ship.copy()
+    total_ship = dy_shiptot.copy()
     for i in range(len(mesonDecay_ship)):
         total_ship += mesonDecay_ship[i]
-    # brem_dir = "/Users/leobailloeul/Documents/coding/decaysimulation/V1"
-    # m_brem, y_brem = protonBremSeries(brem_dir)
-    # total_ship += brem_ship
 
-    # print(brem_ship)
-    # print(mass_dark)
-    #
-    # one_file = "/Users/leobailloeul/Documents/coding/decaysimulation/V1/mCPs_Brem_120GeV_0.0104.txt"
-    # arr = np.loadtxt(one_file, comments="#")
-    # log10theta, log10p, sigma_bin, Nmcp_bin = arr.T
-    #
-    # theta_cut = np.arctan(0.5/40.0)  # ~0.0125 rad
-    # theta = 10**log10theta           # <- if this is degrees, convert: theta = np.deg2rad(10**log10theta)
-    #
-    # mask = (theta < theta_cut)
-    # print("theta_cut=", theta_cut)
-    # print("mask true frac =", mask.mean())
-    # print("Nmcp_bin: min/median/max =", Nmcp_bin.min(), np.median(Nmcp_bin), Nmcp_bin.max())
-    # print("sum Nmcp (all)       =", Nmcp_bin.sum())
-    # print("sum Nmcp (masked)    =", Nmcp_bin[mask].sum())
+    brem_dir_shared = "/Users/leobailloeul/Documents/coding/Archive-dec-9-2025/SHiP-brem-backup"
+    det_angle = np.arctan(0.5/100.0)
+    epsilon = 1.0
 
+    # Sigma p = 1.0, 1.5, 2.0 GeV (lower, central, upper)
+    m_low, y_low = brem_single_hit_or_shared_v2(
+        brem_dir_shared, det_angle=det_angle, epsilon=epsilon,
+        lambda_idx=0, N_POT=NPOT_SHiP, rho=10.2, L=15.27, A=95.95
+    )
+    m_cent, y_cent = brem_single_hit_or_shared_v2(
+        brem_dir_shared, det_angle=det_angle, epsilon=epsilon,
+        lambda_idx=1, N_POT=NPOT_SHiP, rho=10.2, L=15.27, A=95.95
+    )
+    m_high, y_high = brem_single_hit_or_shared_v2(
+        brem_dir_shared, det_angle=det_angle, epsilon=epsilon,
+        lambda_idx=2, N_POT=NPOT_SHiP, rho=10.2, L=15.27, A=95.95
+    )
 
-# for i in range(len(mesonDecay_dark)):
-    #     total_dark = mesonDecay_dark[i]
+    # put brem on a common internal mass grid
+    m_brem_grid = np.unique(np.concatenate([m_low, m_cent, m_high]))
 
-    # print(mass.size)
-    # print(dy_numi.size)
-    # print(mesonDecay_numi[1].size)
+    y_low_g = np.interp(m_brem_grid, m_low, y_low, left=0.0, right=0.0)
+    y_cent_g = np.interp(m_brem_grid, m_cent, y_cent, left=0.0, right=0.0)
+    y_high_g = np.interp(m_brem_grid, m_high, y_high, left=0.0, right=0.0)
 
+    # interpolate all three onto the main mass grid used in the plot (mass_ship)
+    y_low_ship = np.interp(mass_ship, m_brem_grid, y_low_g, left=0.0, right=0.0)
+    y_cent_ship = np.interp(mass_ship, m_brem_grid, y_cent_g, left=0.0, right=0.0)
+    y_high_ship = np.interp(mass_ship, m_brem_grid, y_high_g, left=0.0, right=0.0)
 
-    # # draw plots
-    # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
-    # plt.subplots_adjust(left=0.08, right=0.92, wspace=0.3)
-    # x_ticks = [10**i for i in range(-2, 2)]
-    # x_tick_labels = ['$10^{-2}$', '$10^{-1}$', '1', '$10^{1}$']
-    # y_ticks = [10**i for i in range(0, 19)]
-    # y_tick_labels = ['$1$'] + [(lambda x : f'$10^{{{x}}}$' if x % 2 == 0 else ' ')(i) for i in range(1, 19)]
-    # textbox_props = dict(boxstyle='round', facecolor='white', edgecolor='none', alpha=0.7)
-    #
-    #
-    # ax1.margins(x=0, y=0)
-    # ax1.set_xscale('log')
-    # ax1.set_yscale('log')
-    # ax1.set_xlabel(r'$m_{\chi}$ [$\mathrm{GeV}/\mathrm{c}^2$]')
-    # ax1.set_xticks(x_ticks)
-    # ax1.set_xticklabels(x_tick_labels)
-    # ax1.set_ylabel(r'$N_{\chi} / \epsilon^{2}$')
-    # ax1.set_ylim(1, 1e18)
-    # ax1.set_yticks(y_ticks)
-    # ax1.set_yticklabels(y_tick_labels)
-    # ax1.plot(mass_ship, mesonDecay_ship[0], label = r'$\pi^{0}\to\gamma\chi\overline{\chi}$')
-    # ax1.plot(mass_ship, mesonDecay_ship[1], label = r'$\eta\to\gamma\chi\overline{\chi}$')
-    # ax1.plot(mass_ship, mesonDecay_ship[2], label = r'$J/\psi\to\chi\overline{\chi}$')
-    # ax1.plot(mass_ship, mesonDecay_ship[3], label = r'$\Upsilon\to\chi\overline{\chi}$')
-    # ax1.plot(mass_ship, mesonDecay_ship[2], label = r'$\rho\to\chi\overline{\chi}$')
-    # ax1.plot(mass_ship, mesonDecay_ship[3], label = r'$\Phi\to\chi\overline{\chi}$')
-    # ax1.plot(mass_ship, mesonDecay_ship[4], label = r'$\Omega\to\chi\overline{\chi}$')
-    #
-    #
-    # # ax1.plot(mass_ship, dy_ship,            label = r'$q\overline{q}\to\gamma^{*}\to\chi\overline{\chi}$')
-    # # ax1.plot(mass_ship, total_ship, color='black', linestyle='solid', linewidth=2, label='Total')
-    # ax1.legend(loc = 'lower left', ncol = 2)
-    # # ax1.text(0.55, 0.93, '$1$ Year at SHIP ($4 x 10^{19}$ POT) \n $100$ m, $1$ m radius cylindrical detector', transform=ax1.transAxes, fontsize=10, verticalalignment='center', multialignment = 'left',  bbox=textbox_props)
-    # ax1.text(0.55, 0.93, '$1$ Year at DarkQuest ($10^{18}$ POT) \n $40$ m, $0.5$ m radius cylindrical detector', transform=ax1.transAxes, fontsize=10, verticalalignment='center', multialignment = 'left', bbox=textbox_props)
-    #
-    #
-    # ax2.margins(x=0, y=0)
-    # ax2.set_xscale('log')
-    # ax2.set_yscale('log')
-    # ax2.set_xlabel(r'$m_{\chi}$ [$\mathrm{GeV}/\mathrm{c}^2$]')
-    # ax2.set_xticks(x_ticks)
-    # ax2.set_xticklabels(x_tick_labels)
-    # ax2.set_ylabel(r'$N_{\chi} / \epsilon^{2}$')
-    # ax2.set_xlim(1e-2, 1e-1)
-    # ax2.set_ylim(1, 1e16)
-    # ax2.set_yticks(y_ticks)
-    # ax2.set_yticklabels(y_tick_labels)
-    # ax2.plot(mass_dark, mesonDecay_dark[0], label = r'$\pi^{0}\to\gamma\chi\overline{\chi}$')
-    # # ax2.plot(mass_dark, mesonDecay_dark[1], label = r'$\eta\to\gamma\chi\overline{\chi}$')
-    # # ax2.plot(mass_dark, mesonDecay_dark[2], label = r'$J/\psi\to\chi\overline{\chi}$')
-    # # ax2.plot(mass_dark, mesonDecay_dark[3], label = r'$\Upsilon\to\chi\overline{\chi}$')
-    #
-    # # ax2.plot(mass_dark, mesonDecay_dark[2], label = r'$J/\psi\to\chi\overline{\chi}$')
-    # # ax2.plot(mass_dark, mesonDecay_dark[3], label = r'$\Upsilon\to\chi\overline{\chi}$')
-    # # ax2.plot(mass_dark, mesonDecay_dark[4], label = r'$\Omega\to\chi\overline{\chi}$')
-    #
-    # # ax2.plot(mass_dark, dy_dark,            label = r'$q\overline{q}\to\gamma^{*}\to\chi\overline{\chi}$')
-    # # ax2.plot(mass_dark, total_dark, color='black', linestyle='solid', linewidth=2, label='Total')
-    # ax2.legend(loc = 'lower left', ncol = 2)
-    # ax2.text(0.55, 0.93, '$1$ Year at ArgoNeut ($10^{20}$ POT) \n $975$ m, $0.23$ m radius cylindrical detector', transform=ax2.transAxes, fontsize=10, verticalalignment='center', multialignment = 'left', bbox=textbox_props)
-    #
-    #
-    #
-    # # plt.show()
-    # # save plot as pgf format
-    # fig.savefig('MCP-production.png')
-    # draw plot
-# --- ONE-PANEL, WIDE PLOT LIKE YOUR EXAMPLE ---
-fig, ax = plt.subplots(figsize=(8.09, 5))  # wide like the screenshot
+    # add ONLY the central Λp = 1.5 GeV brem to the total yield
+    total_ship += y_cent_ship
+    y_cent_plot = y_cent_ship.copy()
 
-# axes + scales
-ax.set_xscale('log')
-ax.set_yscale('log')
-ax.set_xlim(1e-2, 1e1)   # <-- add this line to extend to 10 GeV
-ax.margins(x=0, y=0)
-ax.set_xlabel(r'$m_{\chi}\, [\mathrm{GeV}/c^{2}]$')
-ax.set_ylabel(r'$N_{\chi}/\epsilon^{2}$')
+    # plotting
+    fig, ax = plt.subplots(figsize=(8.09, 5))
+    # axes + scales
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.margins(x=0, y=0)
+    ax.set_xlabel(r'$m_{\chi}\, [\mathrm{GeV}/c^{2}]$', fontsize=18)
+    ax.set_ylabel(r'$N_{\chi}/\epsilon^{2}$', fontsize=18)
 
-# nice ticks (powers of 10 with sparse labels)
-x_ticks = [10**i for i in range(-2, 2)]
-x_tick_labels = [r'$10^{-2}$', r'$10^{-1}$', r'$1$', r'$10^{1}$']
-ax.set_xticks(x_ticks)
-ax.set_xticklabels(x_tick_labels)
+    # ticks with powers of 10
+    x_ticks = [10**i for i in range(-2, 2)]
+    x_tick_labels = [r'$10^{-2}$', r'$10^{-1}$', r'$1$', r'$10^{1}$']
+    ax.set_xticks(x_ticks)
+    ax.set_xticklabels(x_tick_labels)
 
-y_ticks = [10**i for i in range(0, 19)]
-y_tick_labels = [r'$1$'] + [ (rf'$10^{{{i}}}$' if i % 2 == 0 else ' ') for i in range(1, 19) ]
-ax.set_yticks(y_ticks)
-ax.set_yticklabels(y_tick_labels)
-ax.set_ylim(1e6, 1e19)
+    y_ticks = [10**i for i in range(0, 20)]
+    y_tick_labels = [r'$1$'] + [ (rf'$10^{{{i}}}$' if i % 2 == 0 else ' ') for i in range(1, 20) ]
+    ax.set_yticks(y_ticks)
+    ax.set_yticklabels(y_tick_labels)
+    ax.set_ylim(1e6, 1e20)
+    ax.set_xlim(1e-3, 1e1)
 
-# thin grid (optional, helps readability)
-ax.grid(True, which='both', linewidth=0.5, alpha=0.25)
+    # lines (use your data; order/labels corrected)
+    lw = 3.0
+    ax.plot(mass_ship, mesonDecay_ship[0], lw=lw, label=r'$\pi^{0}\!\to\!\gamma\chi\bar{\chi}$')
+    ax.plot(mass_ship, mesonDecay_ship[1], lw=lw, label=r'$\eta\!\to\!\gamma\chi\bar{\chi}$')
+    ax.plot(mass_ship, mesonDecay_ship[2], lw=lw, label=r'$J/\psi\!\to\!\chi\bar{\chi}$')
+    ax.plot(mass_ship, mesonDecay_ship[3], lw=lw, label=r'$\Upsilon\!\to\!\chi\bar{\chi}$')
+    ax.plot(mass_ship, mesonDecay_ship[4], lw=lw, label=r'$\rho\!\to\!\chi\bar{\chi}$')
+    ax.plot(mass_ship, mesonDecay_ship[5], lw=lw, label=r'$\omega\!\to\!\chi\bar{\chi}$')
+    ax.plot(mass_ship, mesonDecay_ship[6], lw=lw, label=r'$\phi\!\to\!\chi\bar{\chi}$')
+    ax.plot(mass_ship, dy_ship, lw=3, label = r'$q\overline{q}\to\gamma^{*}\to\chi\overline{\chi}$')
+    ax.plot(mass_ship, y_cent_plot, color='#bcbd22', lw=3, ls='--',
+            label=r'$p$ brem ($\Lambda_p = 1.5~\mathrm{GeV}$)', zorder=2)
+    ax.plot(mass_ship, total_ship, color='black', lw=3, label='Total')
 
-# lines (use your data; order/labels corrected)
-lw = 2.0
-ax.plot(mass_dark, mesonDecay_ship[0], lw=lw, label=r'$\pi^{0}\!\to\!\gamma\chi\bar{\chi}$')
-ax.plot(mass_dark, mesonDecay_ship[1], lw=lw, label=r'$\eta\!\to\!\gamma\chi\bar{\chi}$')
-ax.plot(mass_dark, mesonDecay_ship[2], lw=lw, label=r'$J/\psi\!\to\!\chi\bar{\chi}$')
-ax.plot(mass_dark, mesonDecay_ship[3], lw=lw, label=r'$\Upsilon\!\to\!\chi\bar{\chi}$')
-ax.plot(mass_dark, mesonDecay_ship[4], lw=lw, label=r'$\rho\!\to\!\chi\bar{\chi}$')
-ax.plot(mass_dark, mesonDecay_ship[5], lw=lw, label=r'$\omega\!\to\!\chi\bar{\chi}$')
-ax.plot(mass_dark, mesonDecay_ship[6], lw=lw, label=r'$\phi\!\to\!\chi\bar{\chi}$')
+    y_low_plot  = y_low_ship.copy()
+    y_high_plot = y_high_ship.copy()
+    y_low_plot[y_low_plot <= 0]   = np.nan
+    y_high_plot[y_high_plot <= 0] = np.nan
 
-# add DY and/or Total if you have them
-ax.plot(mass_dark, dy_ship, lw=lw, label=r'$q\bar{q}\!\to\!\gamma^{*}\!\to\!\chi\bar{\chi}$', color='0.5')
-# ax.plot(m_brem, y_brem, lw=3, label=r'$p$ bremsstrahlung')
-ax.plot(mass_dark, total_ship, color='black', lw=3, label='Total')
+    # light yellow band between Λp = 1.0 and 2.0 GeV
+    ax.fill_between(mass_ship, y_low_plot, y_high_plot, color='#bcbd22', alpha=0.5, linewidth=0.0, zorder=1)
 
-# legend styled like your example
-leg = ax.legend(loc='lower left', ncol=2, frameon=True, fancybox=True, framealpha=0.85)
-for line in leg.get_lines():
-    line.set_linewidth(2.0)
+    # legend placement and dimensions
+    leg = ax.legend(loc='lower left', ncol=2, frameon=True, fancybox=True, framealpha=0.85,
+                    fontsize=12.5, handlelength=2.2, markerscale=1.1)
+    # for line in leg.get_lines():
+    #     line.set_linewidth(2.2)
 
-# top-right annotation (two lines)
-textbox_props = dict(boxstyle='round', facecolor='white', edgecolor='none', alpha=0.8)
-ax.text(0.62, 0.93,
-        r'$5$ Years at SHIP ($2x10^{20}$ POT)' '\n'
-        r'$100$ m, $0.5$ m radius cylindrical detector',
-        transform=ax.transAxes, ha='left', va='center', bbox=textbox_props)
-
-# save full-page-ish
-fig.tight_layout()
-fig.savefig('MCP-production.png', dpi=300, bbox_inches='tight')
-# fig.savefig('MCP-production.png', dpi=300, bbox_inches='tight')
+    textbox_props = dict(boxstyle='round', facecolor='white', edgecolor='none', alpha=0.8)
+    ax.text(0.47, 0.93,r'$5$ Years at SHiP ($2\times10^{20}$ POT)' '\n'
+                       r'$100$ m, $0.5$ m radius cylindrical detector',
+            transform=ax.transAxes, ha='left', va='center', bbox=textbox_props, fontsize=12.5)
+    
+    # save plot
+    fig.tight_layout()
+    fig.savefig('MCP_production_SHiP.pdf', bbox_inches='tight', pad_inches=0.1)
