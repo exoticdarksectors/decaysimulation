@@ -1,7 +1,7 @@
 # Summary
-The folder decaysimulation contains two scripts named mesongen and decay and a folder madgraph_mcp containing Minimal_MCP. 
+The folder decaysimulation contains the entirety of meson production and DY production pipelines, these include the meson generation methods via Pythia found in the mesongen folder and the decay of subsequent mesons into mCPs in the decay folder. Drell-Yan production is modelled in MadGraph, where the folder madgraph_mcp contains the Minimal_MCP model used for simulation. 
 
-The mesongen program uses pythia -- a program for the generation of high-energy physics collision events -- to simulate the collision between two particles that can be set using the parameter files beam.config and momentum.config. mesonGen is an executable that simulates the collision and outputs a distribution of the momentum of the final state particles in the form of root files. 
+The mesongen program uses pythia -- a program for the generation of high-energy physics collision events -- to simulate the collision between two particles that can be set using the parameter files beam.config and momentum.config. mesonGen is an executable that simulates the collision and outputs a distribution of the momentum of the final state particles in the form of root files.
 
 The decay program then takes these root files as inputs and saves the momentum distribution of mcp into another root file called mcp-production.root which represents a histogram of the following produced particles.
 
