@@ -68,7 +68,7 @@ void* handler(void *t_argv)
 
     // define kinematic variables
     int id;
-    double px, py, pz, pt, p, m, e, mag, phi, theta;
+    double px, py, pz, pt, p, M, e, mag, phi, theta;
 	double x, y, z;
 
     // create branches
@@ -77,7 +77,7 @@ void* handler(void *t_argv)
     tree->Branch("px", &px);
     tree->Branch("py", &py);
     tree->Branch("pz", &pz);
-    tree->Branch("mass",   &m);
+    tree->Branch("mass",   &M);
 	tree->Branch("phi", &phi);
 	tree->Branch("theta", &theta);
 	tree->Branch("e",   &e);
@@ -111,6 +111,7 @@ void* handler(void *t_argv)
 					px = pythia.event.at(j).px();
 					py = pythia.event.at(j).py();
 					pz = pythia.event.at(j).pz();
+					M = pythia.event.at(j).m();
 					phi = pythia.event.at(j).phi();
 					theta = pythia.event.at(j).theta();
 					e = pythia.event.at(j).e();
