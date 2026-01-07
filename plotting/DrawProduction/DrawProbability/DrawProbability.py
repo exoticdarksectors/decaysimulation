@@ -44,20 +44,20 @@ def brem_v2_to_grid(m_grid_masses, m1d, y1d_baseline, charges, a=3, N_gamma=2.5e
         valid = np.isfinite(yq)
         out[valid] = 10.0**yq[valid]
     det = (1.0 - np.exp(-N_gamma * charges**2))**a * (charges**2)
-    return det[:, None] * out[None, :]# shape: [n_eps, n_m]
+    return det[:, None] * out[None, :]
 
 def _brem_v2_folder_baseline_single_or_shared(
         directory,
         pattern="Brem_*.txt",
         det_angle=np.arctan(0.5/40.0),
-        lambda_idx=1,                 # 0→Λp=1.0, 1→1.5, 2→2.0
+        lambda_idx=1,                 # lambda_idx = 0: sigma p = 1.0, 1:1.5, 2:2.0
         N_POT=1.0e20, rho=7.87, L=16.8, A=55.845,
 ):
     """
-    Reads single_hit_or_shared files with the following this structure:
+    Reads single_hit_or_shared files with the following structure:
       log10(theta), log10(p/GeV), sigma_L1, sigma_L1p5, sigma_L2   [pb/bin]
     Returns: masses, # of track
-    Additionally two chi in same bar already accounted
+    Two chi paricles in same bar already accounted for no need to adjust
     """
     files = sorted(glob.glob(os.path.join(directory, pattern)))
     if not files:
@@ -94,7 +94,7 @@ def _brem_v2_folder_baseline_single_or_shared(
 def _load_ageo_aligned(path, fileMass):
     """
     Load an acceptance file and interpolate its acceptance vs mass onto fileMass.
-    Supports 2+ column files (col0=mass, others=acceptances).
+    Supports 2+ column files (column 0 = mass, others=acceptances).
     """
     arr = np.loadtxt(path)
     if arr.ndim == 1:
@@ -216,7 +216,7 @@ def dyProduction_2d(fileNamecross, filenamedy, fileMass, NPOT, charges, a,
 
     # Sanity check
     if sigma.ndim > 1:
-        sigma = sigma[:, 1]  # assume column 1 is σ(m)
+        sigma = sigma[:, 1]
     if sigma.size != fileMass.size or ageo.size != fileMass.size:
         raise ValueError("Cross-section or acceptance arrays don't match fileMass size.")
 
@@ -273,7 +273,6 @@ dy_SHiP_new = dyProduction_2d(
     totalCrossSection=13e-3,
 )
 
-# prepping sensitivity for proton brem comparison
 total_dune = mesonDecay_dune.copy()
 total_dune += dy_dune_new
 
@@ -304,13 +303,13 @@ brem_2d = brem_v2_to_grid(
 
 m_shared_SHiP, y_shared0_SHiP = _brem_v2_folder_baseline_single_or_shared(
     directory=BREM_SHARED_DIR_SHiP,
-    det_angle=THETA_CUT_SHiP, lambda_idx=1,  # Λp = 1.5 GeV
+    det_angle=THETA_CUT_SHiP, lambda_idx=1,  # Sigma p = 1.5 GeV
     N_POT=NPOT_SHiP, rho=10.2, L=15.27, A=95.95,
 )
 brem_2d_SHiP = brem_v2_to_grid(
-    m_grid_masses=massSHiP,          # your sensitivity mass grid (trimmed to L above)
-    m1d=m_shared_SHiP,                # single-or-shared masses
-    y1d_baseline=y_shared0_SHiP,      # single-or-shared baseline events (no ε, no Poisson)
+    m_grid_masses=massSHiP,         
+    m1d=m_shared_SHiP,              
+    y1d_baseline=y_shared0_SHiP, 
     charges=charge,
     a=A_DET,
     N_gamma=N_GAMMA,
@@ -391,7 +390,6 @@ all_eps = [
 m_grid = np.logspace(np.log10(0.0009916136673313), np.log10(11.3), 800)
 y_top = 2.0
 
-# curves_on_grid will store each experiment's smoothed curve on m_grid
 curves_on_grid = []
 env = np.full_like(m_grid, y_top, dtype=float)
 
