@@ -70,7 +70,7 @@ def mesonDecayProduction(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, file
         return 2 / (3 * 3.14) * np.sqrt(1 - 4 * x / z) * ((1 - z) ** 3) * (2 * x + z) / (z ** 2)
     def I3(x):
         return quad(I3_integrand, 4 * x, 1, args=x)[0]  # integrate
-    v_I3 = np.vectorize(I3) # vectorize
+    v_I3 = np.vectorize(I3)
 
     # define productions
     pi = np.zeros(np.shape(mass_pi))
@@ -113,7 +113,7 @@ def brem_single_hit_or_shared_v2(
         pattern="Brem_120GeV_*.txt",
         det_angle=np.arctan(0.5/40.0),   # radians
         epsilon=1.0,
-        lambda_idx=1,         # 0→1.0 GeV, 1→1.5 GeV, 2→2.0 GeV
+        lambda_idx=1,         # 0:1.0 GeV, 1:1.5 GeV, 2:2.0 GeV
         N_POT=1e20, rho=7.87, L=16.8, A=55.845
 ):
     """
@@ -138,19 +138,18 @@ def brem_single_hit_or_shared_v2(
 
         arr = np.loadtxt(f, comments="#")
         if arr.ndim == 1: arr = arr[None, :]
-        if arr.shape[1] < 5:  # need 3 sigma columns
+        if arr.shape[1] < 5:
             continue
 
         log10theta = arr[:, 0]
-        sigmas = arr[:, 2:5]  # [nbins, 3]
+        sigmas = arr[:, 2:5]
         if lambda_idx not in (0, 1, 2):
             raise ValueError("lambda_idx must be 0, 1, or 2")
 
-        # acceptance on the listed particle
         mask = (log10theta < log10_theta_cut)
         sigma_sum_pb = sigmas[mask, lambda_idx].sum()
 
-        # Number of trackes =  Luminosity x acceptance x epsilon^2
+        # Number of tracks =  Luminosity x acceptance x epsilon^2
         N_tracks = (epsilon**2) * L_eff * sigma_sum_pb
 
         masses.append(mchi)
@@ -229,7 +228,7 @@ if __name__ == '__main__':
     det_angle = np.arctan(0.5 / 40.0)
     epsilon = 1.0
 
-    # Λp = 1.0, 1.5, 2.0 GeV (lower, central, upper)
+    # sigma_p = 1.0, 1.5, 2.0 GeV (lower bound, central line, upper bound)
     m_low, y_low = brem_single_hit_or_shared_v2(
         brem_dir_shared, det_angle=det_angle, epsilon=epsilon,
         lambda_idx=0, N_POT=NPOT_dark, rho=7.87, L=16.8, A=55.845
@@ -243,22 +242,22 @@ if __name__ == '__main__':
         lambda_idx=2, N_POT=NPOT_dark, rho=7.87, L=16.8, A=55.845
     )
 
-    # put brem on a common internal mass grid
+    # put brem on a common mass grid
     m_brem_grid = np.unique(np.concatenate([m_low, m_cent, m_high]))
 
     y_low_g = np.interp(m_brem_grid, m_low, y_low, left=0.0, right=0.0)
     y_cent_g = np.interp(m_brem_grid, m_cent, y_cent, left=0.0, right=0.0)
     y_high_g = np.interp(m_brem_grid, m_high, y_high, left=0.0, right=0.0)
 
-    # interpolate all three onto the main mass grid used in the plot (mass_ship)
+    # interpolate all three onto the mass grid
     y_low_ship = np.interp(mass_ship, m_brem_grid, y_low_g, left=0.0, right=0.0)
     y_cent_ship = np.interp(mass_ship, m_brem_grid, y_cent_g, left=0.0, right=0.0)
     y_high_ship = np.interp(mass_ship, m_brem_grid, y_high_g, left=0.0, right=0.0)
 
-    # add ONLY the central Λp = 1.5 GeV brem to the total yield
+    # only add the central sigma_p = 1.5 GeV production to total
     total_ship += y_cent_ship
 
-    # central Λp = 1.5 GeV curve (dashed) on top of the band
+    # central sigma_p = 1.5 GeV curve
     y_cent_plot = y_cent_ship.copy()
 
     # plotting
@@ -302,14 +301,11 @@ if __name__ == '__main__':
     y_low_plot[y_low_plot <= 0]   = np.nan
     y_high_plot[y_high_plot <= 0] = np.nan
 
-    # light yellow band between Λp = 1.0 and 2.0 GeV
+    # uncertainty band between sigma_p = 1.0 and 2.0 GeV
     ax.fill_between(mass_ship, y_low_plot, y_high_plot, color='#bcbd22', alpha=0.5, linewidth=0.0, zorder=1)
 
     leg = ax.legend(loc='lower left', ncol=2, frameon=True, fancybox=True, framealpha=0.85, fontsize=12.5,
                     handlelength=2.2,markerscale=1.1)
-
-    # for line in leg.get_lines():
-    #     line.set_linewidth(2.2)
 
     textbox_props = dict(boxstyle='round', facecolor='white', edgecolor='none', alpha=0.8)
     ax.text(0.48, 0.93, r'Exposure of $10^{20}$ POT at SpinQuest' '\n'
