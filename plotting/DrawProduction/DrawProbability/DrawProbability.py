@@ -5,7 +5,7 @@ from matplotlib.pyplot import figure
 import pandas as pd
 import os, glob
 
-plt.rcParams['mathtext.fontset'] = 'cm'   # use Computer Modern
+plt.rcParams['mathtext.fontset'] = 'cm'
 plt.rcParams['font.family'] = 'serif'
 
 # geometry + detection
@@ -30,8 +30,7 @@ def _effective_lumi_pb(N_POT=1.0e20, rho=7.87, L=16.8, A=55.845):
 
 def brem_v2_to_grid(m_grid_masses, m1d, y1d_baseline, charges, a=3, N_gamma=2.5e5):
     """
-    Interpolate 'baseline' onto mass grid, then broadcast with detection factor:
-    (1 - exp(-Nγ ε^2))^a * ε^2
+    Interpolate baseline onto mass grid, broadcast with detection factor
     """
     if m1d.size == 0:
         return np.zeros((charges.shape[0], m_grid_masses.size), dtype=float)
@@ -50,14 +49,13 @@ def _brem_v2_folder_baseline_single_or_shared(
         directory,
         pattern="Brem_*.txt",
         det_angle=np.arctan(0.5/40.0),
-        lambda_idx=1,                 # lambda_idx = 0: sigma p = 1.0, 1:1.5, 2:2.0
+        lambda_idx=1,                 # lambda_idx = 0: sigma_p = 0:1.0, 1:1.5, 2:2.0
         N_POT=1.0e20, rho=7.87, L=16.8, A=55.845,
 ):
     """
     Reads single_hit_or_shared files with the following structure:
-      log10(theta), log10(p/GeV), sigma_L1, sigma_L1p5, sigma_L2   [pb/bin]
+      log10(theta), log10(p/GeV), sigma_1, sigma_1.5, sigma_2   [pb/bin]
     Returns: masses, # of track
-    Two chi paricles in same bar already accounted for no need to adjust
     """
     files = sorted(glob.glob(os.path.join(directory, pattern)))
     if not files:
@@ -75,15 +73,13 @@ def _brem_v2_folder_baseline_single_or_shared(
 
         arr = np.loadtxt(f, comments="#")
         if arr.ndim == 1: arr = arr[None, :]
-        if arr.shape[1] < 5:  # expect [log10θ, log10p, sigma_L1, sigma_L1p5, sigma_L2]
+        if arr.shape[1] < 5:
             continue
 
         log10theta = arr[:,0]
         sigmas = arr[:,2:5]
         mask = (log10theta < log10_theta_cut)
         sigma_sum_pb = sigmas[mask, lambda_idx].sum()
-
-        # SINGLE-OR-SHARED: baseline is *events* = L_eff * Σσ (no ×2, no ε^2)
         y_events.append(L_eff_pb * sigma_sum_pb)
         masses.append(mchi)
 
@@ -94,40 +90,35 @@ def _brem_v2_folder_baseline_single_or_shared(
 def _load_ageo_aligned(path, fileMass):
     """
     Load an acceptance file and interpolate its acceptance vs mass onto fileMass.
-    Supports 2+ column files (column 0 = mass, others=acceptances).
     """
     arr = np.loadtxt(path)
     if arr.ndim == 1:
         raise ValueError(f"{path} has 1 column but length != fileMass; cannot align without mass column.")
     x = arr[:, 0].astype(float)
-
-    # Choose which acceptance column to use
-    # Special case for Eta DARK files that store acceptance in col 2
     if ("Eta" in os.path.basename(path)) and (arr.shape[1] >= 3) and ("dark" in path.lower()):
         y = arr[:, 2].astype(float)
     else:
         y = arr[:, 1].astype(float)
 
-    # Interpolate to fileMass (fill=0 outside range)
     y_on_grid = _interp_to(x, y, fileMass, fill=0.0)
-    return y_on_grid  # shape matches fileMass
+    return y_on_grid
 
 def mesonProduction_2d(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, fileNameOmega, fileNameJpsi, fileMass, NPOT, charges, a, N_gamma=2.5e5, SHIP=False):
     # constants
     alpha = 1.0/137.0
     m_e   = 0.00051
     m_pi, m_eta, m_rho, m_omega, m_phi, m_jpsi, m_ups = 0.135, 0.548, 0.775, 0.782, 1.019, 3.1, 9.46
-    # meson / NPOT (PYTHIA)
+    # mesons per POT from PYTHIA
     if SHIP is True:
         c_pi, c_eta, c_rho, c_omega, c_phi, c_jpsi, c_ups = 7.5, 0.85, 1.0, 1.0, 4.1e-2, 8.3e-5, 5.5e-9
     else:
         c_pi, c_eta, c_rho, c_omega, c_phi, c_jpsi, c_ups = 4.7, 0.53, 0.61, 0.61, 2.2e-2, 4.0e-5, 2.5e-9
-    # BR to e+e-
+    # Branching ratios 3 body -> gamma gamma, 2 body -> e+e-
     br_pi, br_eta = 0.98, 0.39
     br_rho, br_omega, br_phi = 4.72e-5, 7.28e-5, 2.95e-4
     br_jpsi, br_ups = 0.05971, 0.0238
 
-    # load + align acceptances to fileMass (shape (nx,))
+    # load + align acceptances to fileMass
     ageo_pi  = _load_ageo_aligned(fileNamePi,   fileMass)
     ageo_eta = _load_ageo_aligned(fileNameEta,  fileMass)
     ageo_rho = _load_ageo_aligned(fileNameRho,  fileMass)
@@ -148,7 +139,7 @@ def mesonProduction_2d(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, fileNa
         return quad(_I3_integrand, 4*x, 1, args=(x))[0]
     vI3 = np.vectorize(I3)
 
-    m = fileMass  # (nx,)
+    m = fileMass
 
     # masks
     ms_pi   = m < m_pi/2
@@ -158,8 +149,7 @@ def mesonProduction_2d(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, fileNa
     ms_phi  = m < m_phi/2
     ms_jpsi = m < m_jpsi/2
     ms_ups  = m < m_ups/2
-
-    # per-channel baselines (nx,)
+    
     base_pi   = np.zeros_like(m)
     base_eta  = np.zeros_like(m)
     base_rho  = np.zeros_like(m)
@@ -192,7 +182,6 @@ def mesonProduction_2d(fileNamePi, fileNameEta, fileNameRho, fileNamePhi, fileNa
 
     baseline_1d = (base_pi + base_eta + base_rho + base_om + base_phi + base_jpsi + base_ups)  # (nx,)
 
-    # detection factor and broadcast to 2D (ny, nx)
     det = (1.0 - np.exp(-N_gamma * charges**2))**a * (charges**2)
     return NPOT * det[:, None] * baseline_1d[None, :]
 
@@ -208,27 +197,20 @@ def _interp_to(x, y, xgrid, fill=0.0):
 def dyProduction_2d(fileNamecross, filenamedy, fileMass, NPOT, charges, a,
                     N_gamma=2.5e5, totalCrossSection=13e-3):
     """
-    Produces a 2D array of DY yields vs (epsilon, mass) using a shared fileMass grid
+    Produces a 2D array of DY vs (epsilon, mass) using a shared fileMass grid
     """
-    # Load cross section and acceptance arrays
-    sigma = np.loadtxt(fileNamecross)   # shape (n_mass,) or (n_mass, 1)
-    ageo  = np.loadtxt(filenamedy)[:, 1]  # take only acceptance column
+    # Load cross section and ageo
+    sigma = np.loadtxt(fileNamecross)
+    ageo  = np.loadtxt(filenamedy)[:, 1]
 
-    # Sanity check
     if sigma.ndim > 1:
         sigma = sigma[:, 1]
     if sigma.size != fileMass.size or ageo.size != fileMass.size:
         raise ValueError("Cross-section or acceptance arrays don't match fileMass size.")
 
-    # Build 1D baseline (yields vs m)
     baseline_1d = NPOT * (sigma * 1e-12) / totalCrossSection * ageo
-
-    # Detection factor vs epsilon
     det = (1.0 - np.exp(-N_gamma * charges**2))**a * (charges**2)
-
-    # Broadcast to 2D
     return det[:, None] * baseline_1d[None, :]
-
 
 # masses SHIP vs Dark
 mass = np.loadtxt('/Users/leobailloeul/Documents/coding/Archive-dec-9-2025/data-backup/mship_values.txt')
@@ -287,11 +269,10 @@ total_SHiP_new += dy_SHiP_new
 
 m_shared, y_shared0 = _brem_v2_folder_baseline_single_or_shared(
     directory=BREM_SHARED_DIR,
-    det_angle=THETA_CUT, lambda_idx=1,  # Λp = 1.5 GeV
+    det_angle=THETA_CUT, lambda_idx=1,  # 1.5GeV
     N_POT=NPOT, rho=7.87, L=16.8, A=55.845,
 )
 
-# Maps pbrem with detection factor
 brem_2d = brem_v2_to_grid(
     m_grid_masses=mass,
     m1d=m_shared,
@@ -303,7 +284,7 @@ brem_2d = brem_v2_to_grid(
 
 m_shared_SHiP, y_shared0_SHiP = _brem_v2_folder_baseline_single_or_shared(
     directory=BREM_SHARED_DIR_SHiP,
-    det_angle=THETA_CUT_SHiP, lambda_idx=1,  # Sigma p = 1.5 GeV
+    det_angle=THETA_CUT_SHiP, lambda_idx=1,  #1.5 GeV
     N_POT=NPOT_SHiP, rho=10.2, L=15.27, A=95.95,
 )
 brem_2d_SHiP = brem_v2_to_grid(
@@ -362,7 +343,6 @@ sensei_small = pd.read_csv('../experiment-contours-small/SENSEI_POLISHED.csv', h
 mq_run3_small = pd.read_csv('../experiment-contours-small/milliQanRun3Fix.csv', header=None)
 lep_small = pd.read_csv('../experiment-contours-small/LEP_edited.csv', header=None)
 
-# Collect all mass / epsilon arrays (make sure units are consistent!)
 all_mass = [
     MiniBooNE_small[0],
     slac_small[0],
@@ -371,7 +351,7 @@ all_mass = [
     charmii_small[0],
     argoneut_small[0],
     # lep_small[0],
-    sensei_small[0] / 1000.,  # convert SENSEI to GeV if in MeV
+    sensei_small[0] / 1000.,  # convert SENSEI to GeV
     mq_run3_small[0],
 ]
 
@@ -397,7 +377,6 @@ for mx, eps in zip(all_mass, all_eps):
     mx = np.asarray(mx)
     eps = np.asarray(eps)
 
-    # sort in x (mass)
     order = np.argsort(mx)
     mx_sorted = mx[order]
     eps_sorted = eps[order]
@@ -423,7 +402,7 @@ plt.fill_between(
     color='lightgray', alpha=0.7,
     label='Existing constraints'
 )
-line_kwargs = dict(color='dimgray', lw=2.0, alpha=0.9)  # thicker lines
+line_kwargs = dict(color='dimgray', lw=2.0, alpha=0.9)
 
 constraint_labels = [
     'MiniBooNE',
@@ -441,7 +420,6 @@ ax = plt.gca()
 
 for i, y_curve in enumerate(curves_on_grid):
     y_plot = np.where(y_curve < y_top, y_curve, np.nan)
-    # Plot the line
     ax.plot(
         m_grid, y_plot,
         **line_kwargs,
