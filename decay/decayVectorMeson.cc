@@ -45,11 +45,6 @@ std::pair<TLorentzVector,TLorentzVector> Do2BodyDecay(TLorentzVector p4_mother, 
     // If these are not provided, they are generated randomly in ranges (-1,1), (-pi,pi).
     // returns a pair of four-momenta p1,p2 of the daughters d1,d2
 
-    if(m1+m2 > p4_mother.M()){
-        std::cout << "ERROR: illegal 2-body decay! m1 + m2 > M (" << m1 << ", " << m2 << ", " << p4_mother.M() << ")\n";
-        throw std::exception();
-    }
-
     TVector3 direction = p4_mother.BoostVector().Unit();
     TVector3 axis;
 
@@ -167,6 +162,11 @@ int main(int argc, char* argv[]) {
         double costheta = rand.Uniform(-1, 1);
         double phi = rand.Uniform(0, 2.0 * PI);
 
+        if(motherParticle.M() < 2.0*mchi){
+            // std::cout << "ERROR: illegal 2-body decay! m1 + m2 > M (" << m1 << ", " << m2 << ", " << p4_mother.M() << ")\n";
+            continue;
+        }
+
         std::pair<TLorentzVector, TLorentzVector> decayProducts = Do2BodyDecay(motherParticle, mchi, mchi, costheta, phi);
 
         // Extract the individual TLorentzVectors from the pair
@@ -227,9 +227,27 @@ int main(int argc, char* argv[]) {
 
     // calculate efficiency: (filtered entry size)/(original entry size)
     int treeSize = tree->GetEntries();
+
+    if (tree->GetEntries() == 0) {
+        std::cout << "No MCPs produced (kinematically forbidden). Exiting early.\n";
+
+        myFile->Close();
+        output->Close();
+
+        return 0;
+    }
+
     int filteredTreeSize = filteredTree->GetEntries();
-    double efficiency = 100.0 * (double) filteredTreeSize/ (double) treeSize;
+
+    double efficiency = 0.0;
+    if (treeSize > 0) {
+        efficiency = 100.0 * (double)filteredTreeSize / (double)treeSize;
+    }
+    if (!std::isfinite(efficiency)) efficiency = 0.0;
+
     cout << "Efficiency: " << efficiency << " %"<< endl;
+
+
     // Close the ROOT file
     myFile->Close();
 
@@ -240,10 +258,10 @@ int main(int argc, char* argv[]) {
     cout << "Completed Successfully!" << endl;
     cout << "Output stored in: " << argv[2] << endl;
 
-    std::string output_filename = "../sensitivity-plot/" + std::string(argv[4]);
+    std::string output_filename = std::string(argv[4]);
 
     // Create an ofstream object to write to the file
-    std::ofstream output_file(output_filename);
+    std::ofstream output_file(output_filename, std::ios::app);
 
     // Check if the file is open
     if (output_file.is_open()) {
