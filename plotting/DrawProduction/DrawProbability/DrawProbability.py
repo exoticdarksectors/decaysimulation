@@ -10,11 +10,14 @@ import os, glob
 
 # geometry + detection
 NPOT = 1e20
+NPOT_SHiP = 2e20
 A_DET = 3
 N_GAMMA = 2.5e5
 R_DET = 0.5
 L_BASE = 40.0
+L_BASE_SHiP = 100.0
 THETA_CUT = np.arctan(R_DET / L_BASE)
+THETA_CUT_SHiP = np.arctan(R_DET / L_BASE_SHiP)
 
 # --- Proton bremsstrahlung (V2) helpers ---
 def _effective_lumi_pb(N_POT=1.0e20, rho=7.87, L=16.8, A=55.845):
@@ -46,7 +49,7 @@ def brem_v2_to_grid(m_grid_masses, m1d, y1d_baseline, charges, a=3, N_gamma=2.5e
 
 def _brem_v2_folder_baseline_single_or_shared(
         directory,
-        pattern="Brem_120GeV_*.txt",
+        pattern="Brem_*.txt",
         det_angle=np.arctan(0.5/40.0),
         lambda_idx=1,                 # 0→Λp=1.0, 1→1.5, 2→2.0
         N_POT=1.0e20, rho=7.87, L=16.8, A=55.845,
@@ -92,6 +95,7 @@ def _brem_v2_folder_baseline_single_or_shared(
 
 # --- use SINGLE-OR-SHARED baseline only ---
 BREM_SHARED_DIR = "/Users/leobailloeul/Documents/coding/decaysimulation/single_hit_or_shared_bar"
+BREM_SHARED_DIR_SHiP = "/Users/leobailloeul/Documents/coding/decaysimulation/SHiP_single_or_shared_bar"
 
 def _load_ageo_aligned(path, fileMass):
     """
@@ -240,14 +244,14 @@ def dyProduction_2d(fileNamecross, filenamedy, fileMass, NPOT, charges, a,
     # Broadcast to 2D
     return det[:, None] * baseline_1d[None, :]
 
-# mass SHIP vs Dark
-NPOTSHiP = 2e20
-NPOT = 1e20
-
 # masses SHIP vs Dark
 # mass = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/mass_ship.txt')
 mass = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/mship_values.txt')
-massSHiP = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/mchi_values.txt')
+massSHiP = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/mship_values_copy.txt')
+mass = mass[:-1]
+# massSHiP = massSHiP[:-1]
+print(mass.size)
+# massSHiP = massSHiP[:-1]
 base = '/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/'
 charge = np.logspace(-5, 1, 500)
 # masses, charges = np.meshgrid(mass, charge)
@@ -261,42 +265,42 @@ mesonDecay_dune = mesonProduction_2d(
     base+'total_efficiency_output2bodydecay-jsiDARK.txt',
     fileMass=mass, NPOT=NPOT, charges=charge, a=3,
     )
-mesonDecay_SHiP = mesonProduction_2d(base + 'total_efficiency_outputdecayPion_SHIP-1m.txt',
-    base + 'total_efficiency_outputdecayEta_SHIP-1m.txt',
-    base + 'total_efficiency_output2bodydecay-rho-SHIP-1m.txt',
-    base + 'total_efficiency_output2bodydecay-phi-SHIP-1m.txt',
-    base + 'total_efficiency_output2bodydecay-omega-SHIP-1m.txt',
-    base + 'total_efficiency_output2bodydecay-jsi-SHIP-1m.txt',
-    fileMass=massSHiP, NPOT=NPOTSHiP, charges=charge, a=3, SHIP=True
+mesonDecay_SHiP = mesonProduction_2d(base + 'total_efficiency_outputdecayPion_SHIP-1m-small.txt',
+    base + 'total_efficiency_outputdecayEta_SHIP-1m-small.txt',
+    base + 'total_efficiency_output2bodydecay-rho-SHIP-1m-small.txt',
+    base + 'total_efficiency_output2bodydecay-phi-SHIP-1m-small.txt',
+    base + 'total_efficiency_output2bodydecay-omega-SHIP-1m-small.txt',
+    base + 'total_efficiency_output2bodydecay-jsi-SHIP-1m-small.txt',
+    fileMass=massSHiP, NPOT=NPOT_SHiP, charges=charge, a=3, SHIP=True
     )
 
 # get DY production
-dy_dune = dyProduction_2d(
-    fileNamecross=base+'dy_cross_091525.txt',
-    filenamedy=base+'ageo_dy_dark_0.5m.txt',
-    fileMass=mass, NPOT=1e20, charges=charge, a=3,
-    totalCrossSection=300e-3,
-)
+# dy_dune = dyProduction_2d(
+#     fileNamecross=base+'dy_cross_091525.txt',
+#     filenamedy=base+'ageo_dy_dark_0.5m.txt',
+#     fileMass=mass, NPOT=1e20, charges=charge, a=3,
+#     totalCrossSection=300e-3,
+# )
 
 dy_dune_new = dyProduction_2d(
-    fileNamecross=base+'dy_cross_091525.txt',
-    filenamedy=base+'ageo_dy_dark_0.5m.txt',
+    fileNamecross=base+'dy_cross_darkquest_nCTEQ15_iron.txt',
+    filenamedy=base+'ageo_darkquest_nCTEQ15_iron.txt',
     fileMass=mass, NPOT=1e20, charges=charge, a=3,
-    totalCrossSection=40e-3,
+    totalCrossSection=13e-3,
 )
 
-dy_SHiP = dyProduction_2d(
-    fileNamecross=base+'dy_cross_ship_final.txt',
-    filenamedy=base+'ageo_dy_ship_0.5m_final.txt',
-    fileMass=massSHiP, NPOT=2e20, charges=charge, a=3,
-    totalCrossSection=300e-3,
-)
+# dy_SHiP = dyProduction_2d(
+#     fileNamecross=base+'dy_cross_ship_final.txt',
+#     filenamedy=base+'ageo_dy_ship_0.5m_final.txt',
+#     fileMass=massSHiP, NPOT=2e20, charges=charge, a=3,
+#     totalCrossSection=300e-3,
+# )
 
 dy_SHiP_new = dyProduction_2d(
-    fileNamecross=base+'dy_cross_ship_final.txt',
-    filenamedy=base+'ageo_dy_ship_0.5m_final.txt',
-    fileMass=massSHiP, NPOT=2e20, charges=charge, a=3,
-    totalCrossSection=40e-3,
+    fileNamecross=base+'dy_cross_ship_nCTEQ15_iron.txt',
+    filenamedy=base+'ageo_ship_nCTEQ_iron.txt',
+    fileMass=massSHiP, NPOT=NPOT_SHiP, charges=charge, a=3,
+    totalCrossSection=13e-3,
 )
 
 # dy_dune_2layers = dyProduction(base+'dy_cross_091525.txt', base+'ageo_dy_dark_0.5m.txt', NPOT, charges, 2)
@@ -334,6 +338,20 @@ brem_2d = brem_v2_to_grid(
     N_gamma=N_GAMMA,
 )
 
+m_shared_SHiP, y_shared0_SHiP = _brem_v2_folder_baseline_single_or_shared(
+    directory=BREM_SHARED_DIR_SHiP,
+    det_angle=THETA_CUT_SHiP, lambda_idx=1,  # Λp = 1.5 GeV
+    N_POT=NPOT_SHiP, rho=10.2, L=15.27, A=95.95,
+)
+brem_2d_SHiP = brem_v2_to_grid(
+    m_grid_masses=massSHiP,          # your sensitivity mass grid (trimmed to L above)
+    m1d=m_shared_SHiP,                # single-or-shared masses
+    y1d_baseline=y_shared0_SHiP,      # single-or-shared baseline events (no ε, no Poisson)
+    charges=charge,
+    a=A_DET,
+    N_gamma=N_GAMMA,
+)
+
 # brem_2d_2layers = brem_v2_to_grid(
 #     m_grid_masses=mass,          # your sensitivity mass grid (trimmed to L above)
 #     m1d=m_shared,                # single-or-shared masses
@@ -345,6 +363,8 @@ brem_2d = brem_v2_to_grid(
 
 # total_dune = total_dune + brem_2d
 total_dune_new = total_dune_new + brem_2d
+total_SHiP_new = total_SHiP_new + brem_2d_SHiP
+print(brem_2d)
 # total_dune_2layers = total_dune_2layers + brem_2d_2layers
 
 print("Generation completed")
@@ -352,17 +372,17 @@ print("Generation completed")
 figure(figsize=(22, 16), dpi=500)
 plt.tick_params(axis='both', which='both', labelsize=25)
 
-plt.contour(mass, charge, total_dune, levels=[3.09], colors = 'skyblue', linewidths = 3)
-plt.plot(10, 5, color='skyblue', label='1 year at DarkQuest 3 layers, 315 bars/layer, bkg = 0, meson + Drell-Yan production only')
+plt.contour(mass, charge, total_dune, levels=[3.09], colors = 'greenyellow', linewidths = 3)
+plt.plot(10, 5, color='greenyellow', label='1 year at DarkQuest, 3 layers, 324 bars/layer, bkg = 0, meson + Drell-Yan production only')
 
-plt.contour(mass, charge, total_dune_new, levels=[3.09], colors = 'salmon', linewidths = 3)
-plt.plot(10, 5, color='salmon', label='1 year at DarkQuest 3 layers, 315 bars/layer, bkg = 0')
+plt.contour(mass, charge, total_dune_new, levels=[3.09], colors = 'forestgreen', linewidths = 3)
+plt.plot(10, 5, color='forestgreen', label='1 year at DarkQuest, 3 layers, 324 bars/layer, bkg = 0')
 
-# plt.contour(mass, charge, dy_dune_new, levels=[3.09], colors = 'greenyellow', linewidths = 3)
-# plt.plot(10, 5, color='greenyellow', label='3 layers, 315 bars/layer, bkg = 0, Updated Drell-Yan with 10x production')
+plt.contour(massSHiP, charge, total_SHiP, levels=[3.09], colors = 'skyblue', linewidths = 3)
+plt.plot(10, 5, color='skyblue', label='5 years at SHiP, 3 layers, 315 bars/layer, bkg = 0, meson + Drell-Yan production only')
 
-plt.contour(massSHiP, charge, total_SHiP_new, levels=[3.09], colors = 'greenyellow', linewidths = 3)
-plt.plot(10, 5, color='greenyellow', label='5 years at SHiP 3 layers, 315 bars/layer, bkg = 0, meson + Drell-Yan production only')
+plt.contour(massSHiP, charge, total_SHiP_new, levels=[3.09], colors = 'teal', linewidths = 3)
+plt.plot(10, 5, color='teal', label='5 years at SHiP, 3 layers, 315 bars/layer, bkg = 0')
 
 # slac = pd.read_csv('../../experiment-contours/slac.csv',header=None)
 # colliders = pd.read_csv('../../experiment-contours/colliders.csv',header=None)

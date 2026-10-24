@@ -450,6 +450,7 @@ if __name__ == '__main__':
     #            np.append(mass, float(line) )
     mass_dark = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/mchi_values.txt')
     mass_ship = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/plotting/sensitivity-plot/mship_values.txt')
+    mass_ship = mass_ship[:-1]
     # mass_ship = np.loadtxt('/Users/leobailloeul/Documents/coding/decaysimulation/decay/sensitivity-plot/mass_ship.txt')
     # get decay production
     NPOT_dark = 1e20
@@ -516,8 +517,8 @@ if __name__ == '__main__':
     # get DY production
     # dy_dark = dyProduction(base+'ageo_dy.txt', base+'dy_cross.txt', NPOT_dark, 300e-3)
     # dy_numi = dyProduction(base+'efficiency_dy_dark.txt', base+'dy_cross_dark.txt', NPOT)
-    dy_ship = dyProduction(base+'dy_cross_091525.txt', base+'ageo_dy_dark_0.5m.txt', NPOT_dark, 40e-3)
-    dy_shiptot = dyProductionTOT(base+'dy_cross_091525.txt', base+'ageo_dy_dark_0.5m.txt', NPOT_dark, 40e-3)
+    dy_ship = dyProduction(base+'dy_cross_darkquest_nCTEQ15_iron.txt', base+'ageo_darkquest_nCTEQ15_iron.txt', NPOT_dark, 13e-3)
+    dy_shiptot = dyProductionTOT(base+'dy_cross_darkquest_nCTEQ15_iron.txt', base+'ageo_darkquest_nCTEQ15_iron.txt', NPOT_dark, 13e-3)
     # dy_ship = dyProduction(base+'efficiency_dy_ship_1m.txt', base+'dy_cross_ship.txt', NPOT_ship, 260e-3)
 
     # add paddings
@@ -573,7 +574,13 @@ if __name__ == '__main__':
 
     # SUM = tracks_single + tracks_double   (both already “tracks”)
     y_sum = y_single_g + y_double_g
-    total_ship += np.interp(mass_ship, m_shared, y_shared, left=0.0, right=0.0) #edited
+
+    proton_brem = np.interp(mass_ship, m_shared, y_shared, left=0.0, right=0.0) #edited
+
+    mask = proton_brem > total_ship
+    proton_brem[mask] = total_ship[mask]
+
+    total_ship += proton_brem
 
 # Add v2 brem to total (fast path if grids identical; else safe fallback)
 #     if (mass_ship.shape == m_brem_v2.shape) and np.allclose(mass_ship, m_brem_v2, rtol=1e-12, atol=0.0):
@@ -681,9 +688,7 @@ y_ticks = [10**i for i in range(0, 20)]
 y_tick_labels = [r'$1$'] + [ (rf'$10^{{{i}}}$' if i % 2 == 0 else ' ') for i in range(1, 20) ]
 ax.set_yticks(y_ticks)
 ax.set_yticklabels(y_tick_labels)
-ax.set_ylim(1e6, 1e20)
-
-
+ax.set_ylim(1e0, 1e20)
 
 # thin grid (optional, helps readability)
 # ax.grid(True, which='both', linewidth=0.5, alpha=0.25)
@@ -706,7 +711,7 @@ lambda_labels = {0: "Λp=1.0 GeV", 1: "Λp=1.5 GeV", 2: "Λp=2.0 GeV"}
 
 # ax.plot(m_single, y_single, lw=3, label=rf'$p$ brem (single, {lambda_labels[lambda_idx]})')
 # ax.plot(m_double, y_double, lw=3, ls='--', label=rf'$p$ brem (double, {lambda_labels[lambda_idx]})')
-ax.plot(m_shared, y_shared, lw=3, ls='--', label=rf'$p$ brem')
+ax.plot(mass_ship, proton_brem, lw=3, ls='--', label=rf'$p$ brem')
 # ax.plot(m_shared, y_shared, lw=3, ls='--', label=rf'$p$ brem (shared, {lambda_labels[lambda_idx]})')
 # ax.plot(m_grid,  y_sum,    lw=3, color='k', label='p brem (sum)')
 
